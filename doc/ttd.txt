@@ -1,0 +1,17 @@
+[x] conf file for each run or load default
+[] peregrine_quiet will run in command line using a conf file
+[] gui is just gui
+[x] track online
+[x] save fix in csv file
+[] delayed GNN so that the tracks are fixed. 
+[x] run on video
+[x] noise removal
+[] record image
+[x] choice of DA
+[x] prefs window
+[] blob size for blurring
+[] changing between different sized dataset (frame size) not working
+[] if you start from an existing track set then the number of targets increase
+[] switch back to original axis limits when view type is changed
+[x] split large blobs into smaller ones based on an indicator in preferences
+[x] Z1 field no longer used (redundant)
