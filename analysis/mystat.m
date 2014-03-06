@@ -41,7 +41,7 @@ title(sprintf('p=%.4f; F(%d,%d)=%.2f', p, b{2,3}, b{3,3}, b{2,5}));
 
 % post hoc tests
 al='abcdefghijklmnopqrstuvwxyz';
-if p <= 0.95 & ~strcmp(stype,'anova_rm')
+if p <= 0.15 & ~strcmp(stype,'anova_rm')
     ph=post_hoc(st);
     [x y]=ind2sub(size(ph), find(ph==1));
     mx=mean(X,1);
