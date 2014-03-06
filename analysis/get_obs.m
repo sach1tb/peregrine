@@ -24,7 +24,7 @@ function get_obs(type, varargin)
 %
 % 'Fps' = frame rate
 % 'FocalId' = id of the fish if you want to analyse a single fish. if not
-% specified, group average is reported
+% specified, group average is reported, specify two ids as [1 2], for xcorr or transfer entropy 
 % 'NumTargets' = number of targets
 % 'TrialTimeMin' = trial time in minutes. if this is a 1x2 vector then only
 % the time between those two values in minutes is extracted
@@ -34,9 +34,6 @@ function get_obs(type, varargin)
 % distance along the same is computed e.g. [10] or [5 10] 
 % 'RegionBounds' = Boundaries of a region to compute number of entries;
 % specify min and maximum e.g. [15, 28], or [-28, -15]
-% 'XcorrIds' = ids of the targets between whom you wish to find
-% xcorrelaion e.g [1 2], if the second id is 0 the centroid of all other
-% ids is used e.g. [1 0]
 % 'TrajSec' = segments of trajectory in seconds that must be used to x corr
 % 'TankPartitions' = number of partitions you want to divide the tank into
 %
@@ -72,7 +69,6 @@ p.addParamValue('TrialTimeMin', 0);
 p.addParamValue('RoiCm', [0 0]);
 p.addParamValue('StimPosCm', [nan]);
 p.addParamValue('RegionBounds', [0 0]);
-p.addParamValue('XcorrIds', [0 0]);
 p.addParamValue('TrajSec', 0);
 p.addParamValue('TankPartitions', 3);
 
@@ -85,12 +81,11 @@ nmin=p.Results.TrialTimeMin;
 roi=p.Results.RoiCm;
 stimpos=p.Results.StimPosCm;
 regionbounds=p.Results.RegionBounds;
-xcorrids=p.Results.XcorrIds;
 trajsec=p.Results.TrajSec;
 tparts=p.Results.TankPartitions;
 
 %%%% processing
-if fid && nt ~=1
+if fid(1) && nt ~=1
     warning('MATLAB:numtargets','Number of expected targets should be 1 for a focal fish');
 end
 
@@ -111,7 +106,7 @@ if isnan(nt) && strcmp('Nearest Neighbor distance', type)
     error('NumTargets must be specified for Nearest Neighbor Distance')
 end
 
-if numel(fid)~=2 && strcmp('Transfer entropy 1-2', type)
+if numel(fid)~=2 && (strcmp('Transfer entropy 1-2', type) || strcmp('Leadership time lag xcorr', type))
     error('Specify two focal ids with transfer entropy from 1 to 2')
 end
 
@@ -136,13 +131,13 @@ end
 switch type
     case 'Nearest neighbor distance'
         bin_centers=0:1.25:25; units='(cm)'; acr='annd'; 
-        get_data=@(PathName, FileName) get_annd(PathName, FileName, nt, nfrm);
+        get_data=@(PathName, FileName) get_annd(PathName, FileName, nt, nfrm, fps);
     case 'Polarization'
         bin_centers=0:0.05:1; units=''; acr='pol'; 
-        get_data=@(PathName, FileName) get_pol(PathName, FileName, nt, nfrm);
+        get_data=@(PathName, FileName) get_pol(PathName, FileName, nt, nfrm, fps);
     case 'Speed'
         bin_centers=0:1:10; units='(cm/s)'; acr='speed'; 
-        get_data=@(PathName, FileName) get_speed(PathName, FileName, nt, nfrm, fid);
+        get_data=@(PathName, FileName) get_speed(PathName, FileName, nt, nfrm, fps, fid);
     case 'Turn rate'
         bin_centers=0:5:200; units='(degree/s)'; acr='turnrate'; 
         get_data=@(PathName, FileName) get_turn_rate(PathName, FileName, nt, nfrm, fid, fps);        
@@ -160,34 +155,34 @@ switch type
                                                     tsec, acc_t, roi, wall_delta, rad);                                             
     case 'Excursions'
         bin_centers=0:.1:1; units='(%)'; acr='excur'; 
-        get_data=@(PathName, FileName) get_excursions(PathName, FileName, nt, nfrm, fid);    
+        get_data=@(PathName, FileName) get_excursions(PathName, FileName, nt, nfrm, fps, fid);    
     case 'Leadership time lag xcorr'
         bin_centers=-.5:.1:.5; units='(sec)'; acr='timelag';
-        get_data=@(Pathname, FileName) get_leadership_xcorr(PathName, FileName, nt, nfrm, fps, trajsec, xcorrids);
+        get_data=@(Pathname, FileName) get_leadership_xcorr(PathName, FileName, nt, nfrm, fps, trajsec, fid);
     case 'Time spent left'
         bin_centers=0:.1:1; units='(%)'; acr='tsl'; 
-        get_data=@(PathName, FileName) get_tsl(PathName, FileName, nt, nfrm, fid); 
+        get_data=@(PathName, FileName) get_tsl(PathName, FileName, nt, nfrm, fps, fid); 
     case 'Time spent right'
         bin_centers=0:.1:1; units='(%)'; acr='tsr'; 
-        get_data=@(PathName, FileName) get_tsr(PathName, FileName, nt, nfrm, fid);    
+        get_data=@(PathName, FileName) get_tsr(PathName, FileName, nt, nfrm, fps, fid);    
     case 'Acceleration'
         bin_centers=0:1:20; units='(cm/s^2)'; acr='acc'; 
         get_data=@(PathName, FileName) get_accel(PathName, FileName,nt, nfrm, fid, fps);
     case 'Distance from stimulus'
         bin_centers=0:2:100; units='(cm)'; acr='d2s'; 
-        get_data=@(PathName, FileName) get_dist2stim(PathName, FileName, nt, nfrm, fid, stimpos);  
+        get_data=@(PathName, FileName) get_dist2stim(PathName, FileName, nt, nfrm, fps, fid, stimpos);  
     case 'Time near stimulus'
         bin_centers=0:.1:1; units='(%)'; acr='tsns'; 
-        get_data=@(PathName, FileName) get_time_near_stim(PathName, FileName, nt, nfrm, fid, stimpos, roi, tparts);  
+        get_data=@(PathName, FileName) get_time_near_stim(PathName, FileName, nt, nfrm, fps, fid, stimpos, roi, tparts);  
     case 'Time far from stimulus'
         bin_centers=0:.1:1; units='(%)'; acr='tsfs'; 
-        get_data=@(PathName, FileName) get_time_far_stim(PathName, FileName, nt, nfrm, fid, stimpos, roi, tparts);
+        get_data=@(PathName, FileName) get_time_far_stim(PathName, FileName, nt, nfrm, fps, fid, stimpos, roi, tparts);
     case 'Number of entries into a region'
         bin_centers=0:2:50; units=''; acr='freqr'; 
-        get_data=@(PathName, FileName) get_freq_into_region(PathName, FileName, nt, nfrm, fid, regionbounds);
+        get_data=@(PathName, FileName) get_freq_into_region(PathName, FileName, nt, nfrm, fps, fid, regionbounds);
     case 'Transfer entropy 1-2'
         bin_centers=0:.2:2; units=''; acr='te12'; 
-        get_data=@(PathName, FileName) get_transfer_entropy_12(PathName, FileName, nt, nfrm, fid);
+        get_data=@(PathName, FileName) get_transfer_entropy_12(PathName, FileName, nt, nfrm, fps, fid);
 end
  
 
@@ -203,46 +198,76 @@ end
 % ad_test_2way=nan(10, 5, max(cselect));
 
 [data permin]=get_data(PathName, FileName);
-% cut the last five minutes
-fprintf('\nAverage *%s* %s \n', type, units);
+
+for jj=1:size(FileName,2)
+    tmp=textscan(FileName{jj}, '%s', 'Delimiter', '_');
+    cond{jj}=tmp{1}{2};
+end
+fprintf('\nAverage *%s* %s [mean value, 1st min, 2nd min, 3rd min, ... ]\n', type, units);
 stats=nanmean(data,2);
-fprintf('FileName\t\t Avg. Value \t\t P1 \t P2 \t P3 \t P4 \t P5\n', type, units);
+% fprintf('FileName\t\t Avg. Value \t\t P1 \t P2 \t P3 \t P4 \t P5\n', type, units);
 fprintf('------------------------------------------------\n');
 for jj=1:size(FileName,2)
-    fprintf('%s\t\t %.3f \t\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n', FileName{1,jj}, stats(jj), permin(jj,1), permin(jj,2), ...
-                                                                        permin(jj,3), permin(jj,4), permin(jj,5));
+    fprintf('%s\t %.3f\t', cond{jj}, stats(jj));
+    for ii=1:size(permin,2)
+        fprintf('\t %.3f', permin(jj,ii));
+    end
+    fprintf('\n');
+%     fprintf('%s\t\t %.3f \t\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n', FileName{1,jj}, stats(jj), permin(jj,1), permin(jj,2), ...
+%                                                                         permin(jj,3), permin(jj,4), permin(jj,5));
 end
 
 uav=~isnan(data);
 fprintf('%% data used = %.2f +/- %.2f\n', mean(mean(uav,2))*100, std(mean(uav,2)*100));
 
+
+plot(data');
+xlabel('time (min)');
+ylabel([type, units]);
+[savedata, path]=uiputfile(['dat0_', type, '.csv'], 'Save data file');
+csvwrite([path, '/', savedata], data);
+
 % stats
+fprintf('Statistical analysis: assumes that the data files are named as "X00_<condition name>_*"\n');
 resp=input('Do you want to run One-way ANOVA stats on this data? []=yes, other=no: ');
 
 if isempty(resp)
-    for jj=1:size(FileName,2)
-        tmp=textscan(FileName{jj}, '%s', 'Delimiter', '_');
-        cond{jj}=tmp{1}{2};
-    end
+    
 
     fprintf('The stats are run with the following conditions as per the naming of files: \n')
     cc=unique(cond);
+    condnum=grp2idx(cond);
+    ccnum=unique(condnum);
     for ii=1:size(cc,2)
-        fprintf('%s\n',cc{ii});
+        fprintf('%s (%d files)\n',cc{ii}, sum(condnum==ii));
     end
-    figure(1); gcf; clf;
+    figure(2); gcf; clf;
     subplot(1,2,1); gca;
-    mystat('anovan', stats, cond, '', 3);
+    set(gca, 'fontsize', 16);
+    mystat('anovan', stats, cond, [type, units], 2);
     
     subplot(1,2,2); gca;
-    plot(permin');
+    for ii=ccnum'
+        cdata=permin(ccnum==ii,:);
+        mu=nanmean(cdata,1);
+        st=nanstd(cdata,[],1);
+        errorbar(mu, st, '-o', 'color', rand(1,3)); hold on
+    end
+    set(gca, 'fontsize', 16);
+    legend(cc);
+    xlabel('time');
+    ylabel([type, units]);
 end
 
 function flag=filter_nt(rf, nt)
 flag=double(size(rf,2)==nt);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Nearest Neighbor Distance
-function [dat permin]=get_annd(PathName, FileName, nt, nfrm)
+function [dat permin]=get_annd(PathName, FileName, nt, nfrm, fps)
 id=0;
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -264,7 +289,9 @@ for ii =1:size(FileName,2)
     end
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 function [dat perm]=annd(r)
@@ -291,7 +318,7 @@ dat=mean(perm);
 
 
 % Speed
-function [dat permin]=get_speed(PathName, FileName, nt, nfrm, id)
+function [dat permin]=get_speed(PathName, FileName, nt, nfrm, fps, id)
 
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -320,7 +347,9 @@ for ii =1:size(FileName,2)
     dat(ii,nz~=nt)=nan;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Turn rate
@@ -370,11 +399,13 @@ for ii =1:size(FileName,2)
     dat(ii,nz~=nt)=nan;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Polarization
-function [dat permin]=get_pol(PathName, FileName, nt, nfrm)
+function [dat permin]=get_pol(PathName, FileName, nt, nfrm, fps)
 
 id=0;
 if numel(nfrm)==1
@@ -397,7 +428,9 @@ for ii =1:size(FileName,2)
     end
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Freezing 
@@ -424,7 +457,9 @@ for ii =1:size(FileName,2)
     dat(ii,1:size(fr1,2))=fr1;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 function [freeze thrash swimm]=locomotory_behavior(X, nX, fps, tsec, acc_t, roi, wall_delta, dist_t, Xi)
@@ -554,7 +589,9 @@ for ii =1:size(FileName,2)
     dat(ii,1:size(tr1,2))=tr1;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Swimming 
@@ -581,11 +618,19 @@ for ii =1:size(FileName,2)
     dat(ii,1:size(sw1,2))=sw1;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Excursions
-function dat=get_excursions(PathName, FileName, nt, nfrm, id)
+function [dat permin]=get_excursions(PathName, FileName, nt, nfrm, fps, id)
+
+if numel(nfrm)==1
+    dat=zeros(size(FileName,2), nfrm);
+else
+    dat=zeros(size(FileName,2), nfrm(2)-nfrm(1));
+end
 
 for ii =1:size(FileName,2)
     [data.X Xi]=reformat_csv([PathName, FileName{ii}], nfrm);
@@ -604,6 +649,11 @@ for ii =1:size(FileName,2)
     end
     dat(ii,:)=shoal_membership_f1(annd_pfish, id);
 end
+
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
+if size(permin,2)==1, permin=permin'; end
 
 function excurf1=shoal_membership_f1(annd_pfish, id)
 %
@@ -700,21 +750,29 @@ for ii =1:size(FileName,2)
         
         dir_us=atan2(v2us, v1us);
         
+%         [xx lags]=xcorr(dir_e, dir_us, 'coeff');
         [xx lags]=xcorr(dir_e, dir_us);
 %         [xx lags]=xcorr(vve(1,:), v1us);
-        [val idx]=max(xx);
-        tau=lags(idx)/fps;
+        if ~isnan(max(xx))
+            [val idx]=max(xx);
+            tau=lags(idx)/fps;
+        else
+            tau=0;
+        end
+        
         
 %         tau=lags(idx)/fps*val;
         dat(ii,k:k+trajsec)=tau;
     end
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Time spent left
-function [dat permin]=get_tsl(PathName, FileName, nt, nfrm, id)
+function [dat permin]=get_tsl(PathName, FileName, nt, nfrm, fps, id)
 
 if ~id
     error('fish id must be specified..');
@@ -738,11 +796,13 @@ for ii =1:size(FileName,2)
     dat(ii,:)=double(r1 < 0 & r1~=0);
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Time spent right
-function [dat permin]=get_tsr(PathName, FileName, nt, nfrm, id)
+function [dat permin]=get_tsr(PathName, FileName, nt, nfrm, fps, id)
 
 if ~id
     error('fish id must be specified..');
@@ -766,7 +826,9 @@ for ii =1:size(FileName,2)
     dat(ii,:)=double(r1 > 0 & r1~=0);
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Acceleration
@@ -807,11 +869,13 @@ for ii =1:size(FileName,2)
     dat(ii,nf~=nt)=nan;
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Distance from stimulus
-function [dat permin]=get_dist2stim(PathName, FileName, nt, nfrm, id, stimpos)
+function [dat permin]=get_dist2stim(PathName, FileName, nt, nfrm, fps, id, stimpos)
 
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -839,11 +903,13 @@ for ii =1:size(FileName,2)
     end
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Time near stimulus
-function [dat permin]=get_time_near_stim(PathName, FileName, nt, nfrm, id, stimpos, roi, tparts)
+function [dat permin]=get_time_near_stim(PathName, FileName, nt, nfrm, fps,id, stimpos, roi, tparts)
 
 if ~id
     error('fish id must be specified..');
@@ -867,11 +933,13 @@ for ii =1:size(FileName,2)
     dat(ii,:)=double(abs(r1-stimpos(1)) < roi(1)/tparts);
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Time far from stimulus
-function [dat permin]=get_time_far_stim(PathName, FileName, nt, nfrm, id, stimpos, roi, tparts)
+function [dat permin]=get_time_far_stim(PathName, FileName, nt, nfrm, fps, id, stimpos, roi, tparts)
 
 if ~id
     error('fish id must be specified..');
@@ -895,11 +963,13 @@ for ii =1:size(FileName,2)
     dat(ii,:)=double(abs(r1-stimpos(1)) > (tparts-1)*roi(1)/tparts);
 end
 
-permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 
-function [dat permin]=get_freq_into_region(PathName, FileName, nt, nfrm, id, regionbounds)
+function [dat permin]=get_freq_into_region(PathName, FileName, nt, nfrm, fps, id, regionbounds)
 
 if ~id
     error('fish id must be specified..');
@@ -930,7 +1000,9 @@ for ii =1:size(FileName,2)
     end
 end
 
-permin=squeeze(sum(reshape(dat, [size(dat,1), size(dat,2)/5, 5]), 2));
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(sum(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 dat=sum(dat,2);
@@ -984,8 +1056,15 @@ Xhcsv=csvread(csvfile);
 % clean the file to ensure that some noise is removed here only
 max_t=max(Xhcsv(:,2));
 if max_t > 100
-    fprintf('[W] found more than 100 targets! Possibly noise\n');
-    Xhcsv=Xhcsv(Xhcsv(:,2)<100,:);
+    fprintf('[W] found more than 100 targets! deleting short tracks... \n');
+    ids=unique(Xhcsv(:,2));
+    ids2=[];
+    for jj=ids'
+        if sum(Xhcsv(:,2)==jj,1) > nfrm/10
+            ids2=[ids2, jj];
+        end
+    end
+    Xhcsv=Xhcsv(ismember(Xhcsv(:,2), ids2),:);
     max_t=max(Xhcsv(:,2));
 end
 

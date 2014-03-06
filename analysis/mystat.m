@@ -3,6 +3,7 @@ function mystat(stype, X, xlabels, ylbl, ptype)
 if nargin < 5
     ptype=1;
 end
+fs=16; % fontsize
 
 switch stype
     case 'anova1way'
@@ -11,23 +12,28 @@ switch stype
         [p b st]=kruskalwallis(X, '', 'off');
     case 'anova_rm'
         [p b]=anova_rm(X, ''); p=p(1);
-    case 'anovan'
-        [p b st]=anovan(X, {xlabels}', 'display', 'off');
-        st.gnames=1:size(st.grpnames{1},1);
+    case 'anovan'  
+        cc=grp2idx(xlabels);
+        ccnum=unique(cc);
+        for ii=ccnum'
+            XX(1:sum(cc==ii),ii)=X(cc==ii);
+        end
+        XX(XX==0)=nan;
+        X=XX;
+        xlabels=unique(xlabels);
+        [p b st]=anova1(X, '', 'off');
 end
 
 switch ptype
     case 1
         ff=boxplot(X);
     case 2
-        ff=bar(mean(X,1),1);
-    case 3
-        boxplot(X, {xlabels}');
-        xlabels=unique(xlabels);
-        X=ones(1,size(xlabels,2)); % to make the rest of the code work
+        ff=bar(nanmean(X,1), 'facecolor', ones(1,3)*.5);
+        hold on;
+        errorbar(1:size(X,2), nanmean(X,1), nanstd(X,[],1)./sqrt(sum(~isnan(X),1)), 'k.');
 end
 
-
+set(gca, 'fontsize', fs);
 set(gca, 'xtick', 1:size(X,2));
 set(gca, 'xticklabel', xlabels);
 ylabel(ylbl);
@@ -35,14 +41,14 @@ title(sprintf('p=%.4f; F(%d,%d)=%.2f', p, b{2,3}, b{3,3}, b{2,5}));
 
 % post hoc tests
 al='abcdefghijklmnopqrstuvwxyz';
-if p <= 0.15 & ~strcmp(stype,'anova_rm')
+if p <= 0.95 & ~strcmp(stype,'anova_rm')
     ph=post_hoc(st);
     [x y]=ind2sub(size(ph), find(ph==1));
     mx=mean(X,1);
     gca;
     for jj=1:numel(x)
-        text(x(jj)+jj*.1, mx(x(jj)), al(jj), 'fontsize', 16, 'fontweight', 'bold');
-        text(y(jj)+jj*.1, mx(y(jj)), al(jj), 'fontsize', 16, 'fontweight', 'bold');
+        text(x(jj)+jj*.1, mx(x(jj))*1.15, al(jj), 'fontsize', fs, 'fontweight', 'bold');
+        text(y(jj)+jj*.1, mx(y(jj))*1.15, al(jj), 'fontsize', fs, 'fontweight', 'bold');
     end
 end
 
