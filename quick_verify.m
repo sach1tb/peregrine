@@ -10,7 +10,6 @@ if nargin ==4 % image is provided for changing and passing
     [xcur, ycur]=cm2pix(xcur, ycur);
     img=highlightpt(img, xcur, ycur);
 else
-
     nsee=10; nfut=3;
     trail=X(:,1)>max(1,k-nsee) & X(:,1)<=k+nfut;
     Xtr=X(trail, :);
@@ -44,7 +43,7 @@ else
 
         jj=jj+1;
     end
-
+    
     xcur=Xtr(curr,3);
     ycur=Xtr(curr,4);
     [xcur, ycur]=cm2pix(xcur, ycur);
@@ -57,12 +56,14 @@ else
 
     % quiver if needed
     if size(X,2)>10
+        fl=ceil(sqrt(Xtr(curr,7)/3)*2);
+        if ~isempty(fl), fl=fl(1); else fl=15; end
         hd=Xtr(curr,11:12)';
         quiver(xcur, ycur, hd(1,:)'*10, hd(2,:)'*10, 0, 'r');
         shape=Xtr(curr,9:10)';
         for ff=1:size(hd,2)
             wTb=[hd(:,ff), [-hd(2,ff), hd(1,ff)]', [xcur(ff), ycur(ff)]'; 0 0 1];
-            xx=(-15:15)';
+            xx=(-fl:fl)'; % based on 1:3 ratio between width and length
             A=[xx.^2, xx];
             yy=A*shape(:,ff);
             pixw=tra2b([xx,yy]', wTb);

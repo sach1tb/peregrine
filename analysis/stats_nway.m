@@ -7,6 +7,7 @@ close all;
 %%%%% STATS
 data=csvread(['../data/data1_', type, '.csv']);
 
+
 switch gxg
     case 'ETHxSIZ'
         cselect=[1:8];
@@ -50,3 +51,5 @@ if isempty(resp)
     saveas(gcf, ['../plots/', type, '_', gxg, '_nway.png'], 'png');
 %     saveas(gcf, ['/Users/sachit/Documents/Publish/2013/papers/bbp_2013b/supplementary/', acr, '_all.fig'], 'fig');
 end
+
+

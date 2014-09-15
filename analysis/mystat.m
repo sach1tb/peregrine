@@ -1,4 +1,15 @@
 function mystat(stype, X, xlabels, ylbl, ptype)
+% function mystat(stype, X, xlabels, ylbl, ptype)
+%
+% stype is the statistical test: can be anova1way or a1, kw, anovan
+% X is the data matrix with each column representing a condition. put nans
+% for unequal n per condition
+% for anovan, X is a single column with all variables and xlabels are the
+% corresponding conditions. e.g. X=[1;2;3;4;5] xlabels=['A'; 'B'; 'A'; 'A';
+% 'B'];
+% xlabels is the conditions structure e.g. {'0.00%', '0.25%'}
+% ylbl is the ylabel
+% ptype is the posthoc type for display. Use 2 for bars and 1 for letters
 
 if nargin < 5
     ptype=1;
@@ -6,22 +17,33 @@ end
 fs=16; % fontsize
 
 switch stype
-    case 'anova1way'
+    case {'anova1way','a1'}
         [p b st]=anova1(X, '', 'off');
     case 'kw'
         [p b st]=kruskalwallis(X, '', 'off');
     case 'anova_rm'
         [p b]=anova_rm(X, ''); p=p(1);
+    case 'pair-with'     
     case 'anovan'  
         cc=grp2idx(xlabels);
         ccnum=unique(cc);
         for ii=ccnum'
+            ntr(ii)=sum(cc==ii);
+        end
+        XX=nan(max(ntr), numel(ccnum));
+        for ii=ccnum'
             XX(1:sum(cc==ii),ii)=X(cc==ii);
         end
-        XX(XX==0)=nan;
+%         XX(XX==0)=nan;
         X=XX;
         xlabels=unique(xlabels);
         [p b st]=anova1(X, '', 'off');
+end
+
+% if it is a percentage then show after multiplying by 100.
+% note that the stats should be on the actual numbers
+if strfind(ylbl, '(%)')
+    X=X*100;
 end
 
 switch ptype
@@ -40,22 +62,51 @@ ylabel(ylbl);
 title(sprintf('p=%.4f; F(%d,%d)=%.2f', p, b{2,3}, b{3,3}, b{2,5}));
 
 % post hoc tests
-al='abcdefghijklmnopqrstuvwxyz';
-if p <= 0.15 & ~strcmp(stype,'anova_rm')
+% al='abcdefghijklmnopqrstuvwxyz';
+% if p <= 0.25 & ~strcmp(stype,'anova_rm')
+%     ph=post_hoc(st);
+%     [x y]=ind2sub(size(ph), find(ph==1));
+%     
+%     tmp=[x,y];
+%     sims=tmp(tmp(:,1)<tmp(:,2),:);
+%     for ii=1:size(ph,2), mus(ii).tags=ii; end
+%     
+%     for jj=1:size(sims,1)
+%         mus(sims(jj,2)).tags=[mus(sims(jj,1)).tags, mus(sims(jj,2)).tags];
+%     end
+%     for ii=1:size(ph,2), mus(ii).tags=unique(mus(ii).tags); end
+%     
+%     mx=nanmean(X,1);
+%     gca;
+%     for jj=1:numel(x)
+%         icr=rand*.15;
+%         text(x(jj), mx(x(jj))*.75+icr, al(jj), 'fontsize', fs, 'fontweight', 'bold');
+%         text(y(jj), mx(y(jj))*.75+icr, al(jj), 'fontsize', fs, 'fontweight', 'bold');
+%     end
+% end
+
+signi=[];kk=1;
+if p <= 0.25 & ~strcmp(stype,'anova_rm')
     ph=post_hoc(st);
-    [x y]=ind2sub(size(ph), find(ph==1));
-    mx=mean(X,1);
-    gca;
-    for jj=1:numel(x)
-        text(x(jj)+jj*.1, mx(x(jj))*1.15, al(jj), 'fontsize', fs, 'fontweight', 'bold');
-        text(y(jj)+jj*.1, mx(y(jj))*1.15, al(jj), 'fontsize', fs, 'fontweight', 'bold');
+    for ii=1:size(ph,1)
+        for jj=1:size(ph,2)
+            if ph(ii,jj)
+                signi(kk,:)=[ii,jj];
+                kk=kk+1;
+            end
+        end
+    end
+    if ~isempty(signi)
+        hs=sigstar(num2cell(signi,2));
+        set(hs, 'color', 'b');
     end
 end
 
 
+
 function ph=post_hoc(st)
 
-c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', 'hsd');
+c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', 'lsd');
 
 % update cselect
 conditions=size(st.gnames,1);

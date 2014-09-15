@@ -43,7 +43,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-The technical details for the methods used in peregrine are described in detail in the following papers \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c}. In particular, two-dimensional position tracking draws from \cite{Butail2013c, Butail2012b}, and shape tracking draws from \cite{Butail2011,Butail2012c}. Modifications to these approaches, if any, are described here.
+Peregrine is an automated tracking system developed to analyse and study animal behaviour. Versions of this tracking system have been used/developed as part of \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c, Ladu2014, Bartolini2014}. Please refer to those for technical details. This document describes basic steps to get started and use peregrine. 
 
 \begin{figure}[ht]
 \centering
@@ -54,7 +54,7 @@ The technical details for the methods used in peregrine are described in detail 
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=.495\linewidth]{output}
+\includegraphics[width=.995\linewidth]{output}
 \caption{Output of the tracker is stored in a csv file where each column corresponds to a single frame and a single target.}
 \label{fig:output}
 \end{figure}
@@ -70,7 +70,7 @@ The technical details for the methods used in peregrine are described in detail 
 \section{Tracking}
 
 \subsection{Position and velocity tracking}
-Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. The output csv file is ordered as: frame, target-id, horizontal-coordinate, vertical-coordinate, horizontal-velocity, vertical-velocity, size-in-pixels 
+Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. 
 
 \subsection{Shape tracking}
 \begin{itemize}
@@ -78,6 +78,33 @@ Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and gl
 \item Optimize on orientation ($\theta$) and parabola fit to minimize the least squares error in the body frame
 \item Feed the measurements to a particle filter
 \end{itemize}
+In the case of Shape tracking the csv file is ordered as:
+\begin{table}[t]
+\caption{csv file output for  tracking}
+\begin{center}
+%\rowcolors{1}{}{lightgray}
+%\resizebox{\textwidth}{!}{%
+\begin{tabular}[t]{cl}
+\hline
+column no. &  variable \\
+\hline
+1 & frame  no. \\
+2 & target-id \\
+3 &  horizontal-coordinate (cm) \\
+4 & vertical-coordinate (cm) \\
+5 &  horizontal-velocity (cm/s) \\
+6 &  vertical-velocity (cm/s) \\
+7 &  size (pixels) \\
+8& 1 (homogeneous coordinate to keep things linear) \\
+9  &shape parameter 1\\
+10 &  shape parameter 2\\
+11 &  heading (x component) \\
+12 &  heading (y component) \\
+\end{tabular}
+%}
+\end{center}
+\label{tab:params}
+\end{table}
 
 
 \subsection{Repair mode}
@@ -143,5 +170,5 @@ The authors would like to acknowledge assistance from Dynamical Systems Laborato
 
 
 \bibliographystyle{unsrt}
-\bibliography{$HOME/Documents/refs/library}
+\bibliography{$HOME/Reference/bibfiles/library}
 \end{document}

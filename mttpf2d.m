@@ -4,7 +4,7 @@ global k
 
 m=7;
 n=10;
-N=200;
+N=500;
 ck=1;
 cid=2;
 ci=2;
@@ -17,12 +17,13 @@ if isempty(Xr)
     Pr=zeros(1,n*N+ci);
 end
 
-
 %%% for adding a point
-dist=[5 5 20 20 10 0 0 0 0 0]';
+dist=[1 1 5 5 10 0 0 0 0 0]'; % units in [cm cm cm/s cm/s pixels]
 if size(Xr,1)==1 && Xr(1)
-    P0=Xr(ci+1:n+ci)'*ones(1,N) + (dist*ones(1,N)).*randn(n,N);
+    eta1=randn(n,N);
+    P0=Xr(ci+1:n+ci)'*ones(1,N) + (dist*ones(1,N)).*eta1;
     Pr=[k Xr(2), P0(:)'];
+    wts=normpdf(eta1(1,:), 0, 1);
 end
 
 
@@ -34,12 +35,13 @@ if size(Xr,2) > n+2
     Xr=Xr(:,1:n+2);
 end
 
-
+% get the number of records in the current time step
 curr=(Xr(:,ck)==k-1 & Xr(:,ck)~=0);
 Pk=Pr(curr,ci+1:N*n+2);
-P=[];
+P=[]; wts=[];
 for ii=1:sum(curr)
     P(n*(ii-1)+1:n*ii,1:N)=reshape(Pk(ii,:),n,N);
+    wts(ii,1:N)=ones(1,N);
 end
 
 nt=sum(curr);
@@ -61,9 +63,9 @@ H=zeros(m,n);
 
 H(1,1)=1/calib.pix2cm(1); H(2,2)=1/calib.pix2cm(2); H(1:2,6)=calib.center;
 H([3 4 5 6 7],[5 7 8 9 10])=eye(5); Hk=H;
-eta=diag(1./calib.pix2cm)*2; % note how we put the error in terms of the number of pixels per cm
+eta=diag(1./calib.pix2cm); % note how we put the error in terms of the number of pixels per cm
 Hinv=@(z) [(z(1:2)-calib.center).*(ones(2,1).*calib.pix2cm'); 0; 0; z(3); 1; z(4:7)]; % converts from Z to X
-f_update=@(k, as1, P,  Zk) pfUpdateMT(k, as1, P, Zk, Hk, eta, n);
+f_update=@(k, as1, P,  wts, Zk) pfUpdateMT(k, as1, P, wts, Zk, Hk, eta, n);
 
 
 % --- f_predict (motion model)
@@ -89,7 +91,6 @@ gvfun=@(Zh, Zk) norm(Zh-Zk);
 costmatrix=@(Zh, Zk) costmatrix2d(Zh, Zk, gvfun);
 
 Zh=zeros(m,nt);
-S=zeros(m,m,nt);
 
 % f_predict
 if k>1
@@ -110,12 +111,12 @@ if ~isempty(Zk)
     as1=da1(D);
 
     % f_update
-    P=f_update(k, as1, P, Zk);
+    [P wts]=f_update(k, as1, P, wts, Zk);
 else % if there is no measurement then terminate the target
     as1=0;
     Zk=zeros(m,1);
     % f_update
-    P=f_update(k, as1, P, Zk);    
+    [P wts]=f_update(k, as1, P, wts, Zk);    
 end
 % if sum(as1==0), keyboard; end
 % initialize
@@ -126,7 +127,8 @@ end
 
 
 %%%%%%
-Xh=pfout(P,[], 1);
+% Xh=pfout(P, wts, 2);
+Xh=pfout(P, wts, 1);
 Xru(:,ci+1:n+ci)=reshape(Xh, n, sum(curr))';
 Xru(:,ck)=k;
 Xru(:,cid)=Xr(curr,cid);
@@ -166,10 +168,8 @@ for tt=1:nT
     end
 end
 
-function p = pfUpdate(p, Z, H, eta)
+function [p wts] = pfUpdate(p, wts, Z, H, eta)
 % function P = pfUpdate(P, Z, H, eta)
-
-wts=zeros(size(p,2),1);
 
 for jj=1:size(p,2)
     X=H*p(:,jj);
@@ -188,7 +188,7 @@ if (neff <=  size(p,2))
     p=p(:,resample(wts));
 end 
 
-function P=pfUpdateMT(k, as1, P, Zk, Hk, eta, n)
+function [P wts]=pfUpdateMT(k, as1, P, wts, Zk, Hk, eta, n)
 
 k=1;
 
@@ -197,9 +197,10 @@ for tt=1:size(P,1)/n
     [r c]=getind(n, k, tt, 1:n, n);
     if numel(as1) >= tt
         if as1(tt)
-            P(r,:)=pfUpdate(P(r,:), Zk(:,as1(tt)), Hk, eta);
+            [P(r,:), wts(tt,:)]=pfUpdate(P(r,:), wts(tt,:), Zk(:,as1(tt)), Hk, eta);
         else
             P(r,:)=0;
+            wts(tt,:)=1;
         end
     end
 end
@@ -293,18 +294,26 @@ if flag is 2 then the function will compute the max along the longer dimension..
 ok. so there's a check now that the longer dimension has to be columns!!
 %}
 
-switch flag
-    case 1
-        estx = mean(x,2);
-    case 2
-        [val idx] = max(wts);
-        estx = x(:,idx);
-    case 3
-        estx = mode(x,2);
-    otherwise
-        error('brrrr!!');
+% if all wts are same
+% if ~max(wts), flag=1; end
+if ~isempty(x)
+    switch flag
+        case 1
+            estx = mean(x,2);
+        case 2
+            n=size(x,1)/size(wts,1);
+            for jj=1:size(wts,1)
+                [val idx] = max(wts(jj,:));
+                estx(n*(jj-1)+1:n*jj,1) = x(n*(jj-1)+1:n*jj,idx);
+            end
+        case 3
+            estx = mode(x,2);
+        otherwise
+            error('brrrr!!');
+    end
+else
+    estx=[];
 end
-
 
 function S=zhcov(r,P, Hk)
 zh=zeros(size(Hk,1),size(P,2));

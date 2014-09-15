@@ -229,7 +229,7 @@ if ~isempty(stats)
     
     %%%%%%%%%%%% don't run if there are too many targets... probably due to
     %%%%%%%%%%%% bad contrast and threshold
-    if size(stats,1) < 30
+    if size(stats,1) < 100
         stats=occlusion_splitting(stats, split, sz);
     end
     
@@ -389,6 +389,15 @@ for jj=1:size(stats,1)
     % select the body pixels
     pix=stats(jj).PixelList;
     if ~isempty(pix) && size(pix,1) > 20 % the number of pixels must be enough to fit the curve
+        % update the centroid to fall on the actual fish body
+        old_centr=stats(jj).Centroid';
+        [val idx]=min(sum((pix'-old_centr*ones(1,size(pix,1))).^2));
+        body_pix=pix(idx,:)';
+        shift_vec=body_pix-old_centr;
+        if norm(shift_vec) > 1 % shift a bit more if the distance was more than 1
+            stats(jj).Centroid=(old_centr+shift_vec*2)';
+        end
+%         old_centr-stats(jj).Centroid'
         % choose no more than 100 
         np=min(100,size(pix,1));
         pix=pix(ceil(linspace(1, size(pix,1), np)), :);

@@ -14,8 +14,8 @@ gt=16;
 
 %%%%
 if isempty(Xr)
-    Xr=zeros(1,n+2);
-    Pr=zeros(1,n^2+2);
+    Xr=zeros(1,n+ci);
+    Pr=zeros(1,n^2+ci);
 end
 
 %%% for adding a point
