@@ -6,11 +6,11 @@ function get_obs(type, varargin)
 % 'Polarization'
 % 'Speed'
 % 'Distance covered'
+% 'Coord pos'
 % 'Absolute turn rate'
 % 'Freezing'
 % 'Thrashing'
 % 'Swimming'
-% 'Swimming straight'
 % 'Excursions'
 % 'Time spent left'
 % 'Time spent right'
@@ -49,8 +49,10 @@ function get_obs(type, varargin)
 % get_obs('Freezing', 'fps', 24, 'numTargets', 5,'TrialTimeMin', 5, 'Focalid', 1)
 %
 % 2) find the percentage time spent freezing by all fish
-% get_obs('Freezing', 'fps', 24, 'numTargets', 5,'TrialTimeMin', 5)
-%
+% get_obs('Freezing', 'fps', 24, 'numTargets', 5, 'RoiCm', [50 30], 'TrialTimeMin', 5)
+% or a customized version with radius and deltawall
+% get_obs('Freezing', 'fps', 60, 'numTargets', 1', 'TrialTimeMin', 1, 'RoiCm', [25.4 25.4], 'FreezingRadius', 2, 'deltaWall', 2)
+% 
 % 3) find the average speed of all fish
 % get_obs('Speed', 'fps', 24, 'numTargets', 5,'TrialTimeMin', 5)
 %
@@ -108,6 +110,8 @@ p.addParamValue('FreezingRadius', 2);
 p.addParamValue('Coord', 0);
 p.addParamValue('TEDS', 30);
 p.addParamValue('TENB', 7);
+p.addParamValue('deltaWall', 3);
+
 
 p.parse(varargin{:});
 
@@ -124,6 +128,7 @@ frad=p.Results.FreezingRadius;
 coord=p.Results.Coord;
 ds=p.Results.TEDS;
 nb=p.Results.TENB;
+dwall=p.Results.deltaWall;
 
 %%%% processing
 if numel(find(fid~=0))>1
@@ -137,7 +142,6 @@ if fid(1) && numel(find(fid~=0))==1 && nt ~=1 && ~strcmp(type, 'Leadership time 
 end
 
 
-
 % validating
 if ~fps
     error('Fps must be specified');
@@ -145,6 +149,10 @@ end
 
 if ~nmin
     error('TrialTimeMin must be specified');
+end
+
+if ~sum(roi) && (strcmp('Freezing', type) || strcmp('Thrashing', type) || strcmp('Swimming', type))
+    error('RoiCm must be specified to properly classify locomotory behavior');
 end
 
 if isnan(stimpos) && strcmp('Distance from stimulus', type)
@@ -190,25 +198,28 @@ switch type
         get_data=@(PathName, FileName) get_pol(PathName, FileName, nt, nfrm, fps, fid);
     case 'Speed'
         bin_centers=0:1:10; units='(cm/s)'; acr='speed'; 
-        get_data=@(PathName, FileName) get_speed(PathName, FileName, nt, nfrm, fps, fid);
+        get_data=@(PathName, FileName) get_speed(PathName, FileName, nt, nfrm, fps, fid);    
     case 'Distance covered'
         bin_centers=0:1:100; units='(m)'; acr='dtcm'; 
-        get_data=@(PathName, FileName) get_path_travelled(PathName, FileName, nt, nfrm, fps, fid);    
+        get_data=@(PathName, FileName) get_path_travelled(PathName, FileName, nt, nfrm, fps, fid);   
+    case 'Coord position'
+        bin_centers=0:5:100; units='(cm)'; acr='pos'; 
+        get_data=@(PathName, FileName) get_coord_pos(PathName, FileName, nt, nfrm, fps, coord, fid);    
     case 'Absolute turn rate'
-        bin_centers=0:5:200; units='(degree/s)'; acr='turnrate'; 
+        bin_centers=0:5:300; units='(degree/s)'; acr='turnrate'; 
         get_data=@(PathName, FileName) get_turn_rate(PathName, FileName, nt, nfrm, fid, fps);        
     case 'Freezing'
-        bin_centers=0:.1:1; units='(%)'; acr='ptf'; acc_t=120; wall_delta=3; tsec=2;
+        bin_centers=0:.1:1; units='(%)'; acr='ptf'; acc_t=120; tsec=2;
         get_data=@(PathName, FileName) get_freeze(PathName, FileName, nt, nfrm, fid, fps,...
-                                                    tsec, acc_t, roi, wall_delta, frad); 
+                                                    tsec, acc_t, roi, dwall, frad); 
     case 'Thrashing'
-        bin_centers=0:.1:1; units='(%)'; acr='ptt'; acc_t=120; wall_delta=3; tsec=2;
+        bin_centers=0:.1:1; units='(%)'; acr='ptt'; acc_t=120; tsec=2;
         get_data=@(PathName, FileName) get_thrash(PathName, FileName, nt, nfrm, fid, fps,...
-                                                    tsec, acc_t, roi, wall_delta, frad);
+                                                    tsec, acc_t, roi, dwall, frad);
     case 'Swimming'
-        bin_centers=0:.1:1; units='(%)'; acr='ptt'; acc_t=120; wall_delta=3; tsec=2;
+        bin_centers=0:.1:1; units='(%)'; acr='ptt'; acc_t=120; tsec=2;
         get_data=@(PathName, FileName) get_swimm(PathName, FileName, nt, nfrm, fid, fps,...
-                                                    tsec, acc_t, roi, wall_delta, frad);                                             
+                                                    tsec, acc_t, roi, dwall, frad);                                             
     case 'Excursions'
         bin_centers=0:.1:1; units='(%)'; acr='excur'; 
         get_data=@(PathName, FileName) get_excursions(PathName, FileName, nt, nfrm, fps, fid);    
@@ -444,15 +455,20 @@ for ii =1:size(FileName,2)
         data.X(jj,:)=sma(data.X(jj,:), ceil(fps));
     end
 
-     if id
+    if id
         r=getind(Xi.nX, 1, id, 1:Xi.nX,1);
         data.X=data.X(r,:);
         nt=1;
-     end
+    end
+     
+     
+%     for jj=1:size(data.X,1)
+%         data.X(jj,:)=sma(data.X(jj,:), 15);
+%     end
     
     
-    r1=data.X(3:Xi.nX:end,:);
-    r2=data.X(4:Xi.nX:end,:);
+    r1=data.X(1:Xi.nX:end,:);
+    r2=data.X(2:Xi.nX:end,:);
     dr1=diff(r1,1,2);
     dr2=diff(r2,1,2);
    
@@ -464,6 +480,44 @@ for ii =1:size(FileName,2)
 end
 
 dat=dat/100;
+
+if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
+nmin=nfrm/fps/60;
+permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
+if size(permin,2)==1, permin=permin'; end
+
+
+%% Coord position
+function [dat permin]=get_coord_pos(PathName, FileName, nt, nfrm, fps, coord, id)
+
+if numel(nfrm)==1
+    dat=zeros(size(FileName,2), nfrm);
+else
+    dat=zeros(size(FileName,2), nfrm(2)-nfrm(1));
+end
+
+for ii =1:size(FileName,2)
+    [data.X Xi]=reformat_csv([PathName, FileName{ii}], nfrm);
+ 
+    data.X= clean_and_smooth(data.X,Xi,nt);
+    
+    % to remove noise this is smoothened more
+    for jj=1:size(data.X,1)
+        data.X(jj,:)=sma(data.X(jj,:), ceil(fps));
+    end
+
+     if id
+        r=getind(Xi.nX, 1, id, 1:Xi.nX,1);
+        data.X=data.X(r,:);
+        nt=1;
+     end
+    
+    
+    r1=data.X(coord:Xi.nX:end,:);
+    %dat(ii,1:size(dr1,2))=cumsum(sum(sqrt(dr1.^2+dr2.^2),1),2)./nz;
+    dat(ii,1:size(r1,2))=r1;
+
+end
 
 if numel(nfrm)==2, nfrm=nfrm(2)-nfrm(1); end
 nmin=nfrm/fps/60;
@@ -532,21 +586,33 @@ if numel(nfrm)==1
 else
     dat=zeros(size(FileName,2), nfrm(2)-nfrm(1));
 end
+
 for ii =1:size(FileName,2)
     [data.X Xi]=reformat_csv([PathName, FileName{ii}], nfrm);
  
     data.X= clean_and_smooth(data.X,Xi,nt);
+    
+    % to remove noise this is smoothened more
+%     for jj=1:size(data.X,1)
+%         data.X(jj,:)=sma(data.X(jj,:), ceil(fps)/4);
+%     end
 
-     if id
+    if id
         r=getind(Xi.nX, 1, id, 1:Xi.nX,1);
         data.X=data.X(r,:);
         nt=1;
-     end
-    
+    end
     
     v1=data.X(3:Xi.nX:end,:);
     v2=data.X(4:Xi.nX:end,:);
    
+
+    % add heading info (if available)
+    if Xi.nX ==10
+        v1=data.X(9:Xi.nX:end,:);
+        v2=data.X(10:Xi.nX:end,:);
+    end
+    
     % get current timestep and previous timestep
     v1k=v1(:,1:end-1);
     v1km1=v1(:,2:end);
@@ -565,7 +631,7 @@ for ii =1:size(FileName,2)
     
     nz=sum(v1k~=0,1);
    
-    tr=acos(dp)*fps*180/pi;
+    tr=(acosd(dp)*fps);
     tr(v1k==0 & v2k==0)=0;
     dat(ii,1:size(tr,2))=sum(real(tr),1)./nz;
     dat(ii,nz~=nt)=nan;
@@ -623,7 +689,7 @@ P=1/n*norm(sum(vhat,2));
 
 
 %% Freezing 
-function [dat permin]=get_freeze(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, wall_delta, rad)
+function [dat permin]=get_freeze(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, dwall, rad)
 
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -641,7 +707,7 @@ for ii =1:size(FileName,2)
     end
     
     % frames corresponding to 2 sec and 2 cm radius
-    fr1=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, wall_delta, rad, Xi); 
+    fr1=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, dwall, rad, Xi); 
     
     dat(ii,1:size(fr1,2))=fr1;
 end
@@ -652,7 +718,7 @@ permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Thrashing 
-function [dat permin]=get_thrash(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, wall_delta, rad)
+function [dat permin]=get_thrash(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, dwall, rad)
 
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -670,7 +736,7 @@ for ii =1:size(FileName,2)
     end
     
     % frames corresponding to 2 sec and 2 cm radius
-    [fr1 tr1]=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, wall_delta, rad, Xi); 
+    [fr1 tr1]=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, dwall, rad, Xi); 
 
     dat(ii,1:size(tr1,2))=tr1;
 end
@@ -681,7 +747,7 @@ permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 % Swimming 
-function [dat permin]=get_swimm(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, wall_delta, rad)
+function [dat permin]=get_swimm(PathName, FileName, nt, nfrm, id, fps, tsec, acc_t, roi, dwall, rad)
 
 if numel(nfrm)==1
     dat=zeros(size(FileName,2), nfrm);
@@ -699,7 +765,7 @@ for ii =1:size(FileName,2)
     end
     
     % frames corresponding to 2 sec and 2 cm radius
-    [fr1 tr1 sw1]=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, wall_delta, rad, Xi); 
+    [fr1 tr1 sw1]=locomotory_behavior(data.X, Xi.nX, fps, tsec, acc_t, roi, dwall, rad, Xi); 
 
     dat(ii,1:size(sw1,2))=sw1;
 end
@@ -710,7 +776,7 @@ permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 
-function [freeze thrash swimm]=locomotory_behavior(X, nX, fps, tsec, acc_t, roi, wall_delta, dist_t, Xi)
+function [freeze thrash swimm]=locomotory_behavior(X, nX, fps, tsec, acc_t, roi, dwall, dist_t, Xi)
 % function freeze=locomotory_behavior(X,nX,n,dist_t)
 %
 % fr1=locomotory_behavior(data.X, Xi.nX, 48, 2); % frames corresponding to 2 sec and 2 cm radius
@@ -734,6 +800,19 @@ r2=X(2:nX:end,:);
 v1=X(3:Xi.nX:end,:);
 v2=X(4:Xi.nX:end,:);
 
+% add heading info
+if Xi.nX ==6
+    h1=v1;
+    h2=v2;
+else
+    h1=X(9:Xi.nX:end,:);
+    h2=X(10:Xi.nX:end,:);
+end
+heading=angle(h1+1i*h2);
+
+% for later 
+turnRate=diff(heading, 1, 2)*fps;
+
 % accelerations
 a1=diff(v1, [], 2)*fps;
 a2=diff(v2, [], 2)*fps;
@@ -754,25 +833,31 @@ for ff=1:size(r1,1)
         for jj=2:size(rt,2)
             dist(1,jj-1)=norm(rt(:,1)- rt(:,jj));
         end
-        if max(dist(1,:))<dist_t && ~sum(dist==0)
+        if max(dist(1,:))<dist_t && ~sum(dist==0) % if the fish stayed within a ball of radius dist_t
             if numel(roi)==2
                 if sum(accel(ff,ii:ii+n-1)) > acc_t && ... % if the fish is accelerating above a value 
-                    (sum(abs(rt(1,:))>roi(1)/2-wall_delta) || ... % if the fish is near the wall
-                    sum(abs(rt(2,:))>roi(2)/2-wall_delta))
+                    (sum(abs(rt(1,:))>roi(1)/2-dwall) || ... % if the fish is near the wall, i.e., 
+                    sum(abs(rt(2,:))>roi(2)/2-dwall))        % the fish position is within a delta of the wall
                     thrash(ii:ii+n-1)=1;
                 else
                     freeze(ii:ii+n-1)=1;
                 end
             elseif numel(roi)==4
                 if sum(accel(ff,ii:ii+n-1)) > acc_t && ...
-                    (sum(rt(1,:)<roi(1)+wall_delta) || ...
-                     sum(rt(2,:)<roi(2)+wall_delta) || ...
-                     sum(rt(1,:)>roi(3)-wall_delta) || ...
-                     sum(rt(2,:)>roi(4)-wall_delta))
+                    (sum(rt(1,:)<roi(1)+dwall) || ...
+                     sum(rt(2,:)<roi(2)+dwall) || ...
+                     sum(rt(1,:)>roi(3)-dwall) || ...
+                     sum(rt(2,:)>roi(4)-dwall))
                     thrash(ii:ii+n-1)=1;
                 else
                     freeze(ii:ii+n-1)=1;
                 end
+            % this new is based on Violet and Tiziana's analysis that fish can also be considered
+            % thrashing if it is at an angle of 20 degrees or more to the
+            % wall            
+%             elseif (sum(abs(rt(1,:))>roi(1)/2-dwall) && acosd(abs(h1))>20 && acosd(abs(h1))<160) || ...
+%                    (sum(abs(rt(2,:))>roi(2)/2-dwall) && acosd(abs(h1))<70)
+%                 thrash(ii:ii+n-1)=1;
             end
         end
     end
@@ -1585,7 +1670,11 @@ X=X(1:ds:end);
 Y=Y(1:ds:end);
 
 % binning
-bins=linspace(min(X(:)), max(X(:)), r);
+% Z=[X(:), Y(:)]; % use both datasets
+% Z=X(:);
+% bins=linspace(min(Z(:)), max(Z(:)), r);
+bins=linspace(-1, 1, r); % because the incoming data is normalized anyway
+% fprintf('binends=[%.1f, %.1f]\n', bins(1), bins(end));
 binwidth=bins(2)-bins(1);
 bb=bins;
 bins=[-inf bins(1)-binwidth/2 bins+binwidth/2];

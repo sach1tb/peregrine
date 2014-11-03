@@ -1,4 +1,13 @@
 function [Xr Pr]=mttkf2d(Xr, Pr,  Zk, dt, calib, da_type)
+%function [Xr Pr]=mttkf2d(Xr, Pr,  Zk, dt, calib, da_type)
+%
+% 2D kalman filter
+% Xr is the [* x 6+2] row matrix for the current time step from the csv file
+% Pr is the [* x 36+2] corresponding rows that will make the covariance matrix
+% Zk is the [3 x *] matrix measurement for the current time step
+% dt is the time between frames (e.g. 1/30 seconds)
+% calib is the calibration matrix for the camera
+% da_type is for data association, set it to 0
 
 global k
 global trklen

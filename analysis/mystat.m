@@ -106,7 +106,7 @@ end
 
 function ph=post_hoc(st)
 
-c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', 'lsd');
+c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', 'hsd');
 
 % update cselect
 conditions=size(st.gnames,1);
