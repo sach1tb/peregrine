@@ -12,7 +12,7 @@
 \usepackage{amssymb}  % assumes amsmath package installed
 \usepackage{bm}  % assumes amsmath package installed
 \usepackage{enumerate}  % assumes amsmath package installed
-
+\usepackage{hyperref}
 
 
 \def\bs{\boldsymbol}
@@ -73,11 +73,7 @@ Peregrine is an automated tracking system developed to analyse and study animal 
 Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. 
 
 \subsection{Shape tracking}
-\begin{itemize}
-\item Find the centroid
-\item Optimize on orientation ($\theta$) and parabola fit to minimize the least squares error in the body frame
-\item Feed the measurements to a particle filter
-\end{itemize}
+The shape tracking follows the approach described in \cite{Bartolini2014}. Briefly, the measurements consist of a centroid, orientation, and two shape parameters that represent a parabola in the body frame. The parabola and corresponding orientation is found by brute-force search. The final measurements are fed into a particle filter with 200 particles. 
 In the case of Shape tracking the csv file is ordered as:
 \begin{table}[t]
 \caption{csv file output for  tracking}
@@ -161,6 +157,27 @@ S[k]=\frac{1}{N}\sum_{i=1}^N\|\bs{v}_i[k]\|
 		\item \emph{Time spent freezing:} To elucidate the behavior of the subjects, we score the time spent freezing during each trial. This value is computed automatically based on the condition that a fish is considered freezing during a frame if it spends two continuous seconds within a ball of radius of 2 cm \cite{Kopman2013}. Freezing is recorded if at least one fish satisfied this condition.
 		\item \emph{Excursions of focal from shoal:} To measure the number of excursions from the shoal of a particular fish, we use the definition of shoal membership as described in \cite{Miller2011a}. In particular, we (i) compute the time series of average nearest neighbor distance of the focal fish,(ii) distribution of ANND for all fish over all frames is computed. Use the mode of this distribution as the threshold, divide the time series into segments where the individual's ANND goes above the mode, and (iii) find the distribution of the maximum ANND of each segment. The upper p=0.05 quantile of the max ANND distribution determines if a segment is an excursion or not. 
 	\end{enumerate}
+\item \emph{Tail-beat frequency:} Tail-beat frequency is computed using the tail-tip position estimated from the body frame location. For a signal $x$, the \emph{fft} routine implements the following DFT
+\begin{equation}
+X(k)=\sum_{j=0}^{N-1}x(j)\omega^{jk},
+\end{equation}
+where $\omega=\exp(-2\pi i /N)$ and $k \in \mathbb{Z}$, and $x(j)$ is the coefficient for the sinusoidal frequency $\omega^{jk}$, which is equal to $jk/N$. Since matlab returns a double sided spectrum of magnitudes, the amplitude is obtained by doubling the magnitude of $X(k)$. 
+Also refer to the example in \url{http://www.mathworks.in/help/matlab/ref/fft.html}.  
+\begin{figure}
+\centering
+\includegraphics[width=.995\linewidth]{tbf_computation}
+\caption{Tail-beat frequency computation: (a) tail end of the fish in successive frames (increasing in time as the color changes from grey to dark, with 0 marking the fish body center) when the fish was not occluded and away from the tank wall; (b) detrended relative tail-tip position during that sequence; and (c) Fast Fourier transform of the tail-tip position for analysis in the frequency domain. The frequency with the maximum magnitude (here 4.2 Hz) is selected as the tail-beat frequency}
+\label{fig:tbf_computation}
+\end{figure}	
+
+\begin{figure}
+\centering
+\includegraphics[width=.995\linewidth]{fft_example}
+\caption{The toy example above shows how FFT is used to compute frequency and amplitude from a given signal. A signal with known frequency (5 Hz) and and amplitude (3 units) is sampled at 60 Hz after corrupting with zero-mean Gaussian noise of 0.1 units standard deviation. The signal is then detrended to remove linear trends. The circles on the left mark the detrended points on the noisy signal. The right plot shows the magnitude after applying the fast fourier transform along the length of the signal. The signal frequency is selected as the one where the magnitude is maximum (5.5 Hz) and the amplitude is twice the magnitude.}
+\label{fig:fft_example}
+\end{figure}	
+
+
 \end{enumerate}
 
 

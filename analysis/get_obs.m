@@ -91,6 +91,13 @@ function get_obs(type, varargin)
 % follows
 % get_obs('Transfer entropy', 'fps', 25, 'numTargets', 2, 'TrialTimeMin', 5, 'FocalId', [1 2], 'TEDS', 50, 'TENB', 7, 'Coord', 2)
 % 
+% 11) find tail beat frequency and tail beat amplitude. they both depend on
+% the fish size in pixels and the length of the trajectory that you use to run an fft
+% on. Hence, the command is
+% get_obs('Tail beat freq', 'fps', 60, 'numTargets', 1, 'TrialtimeMin', 2, 'FishLengthPix', 40, 'TrajSec', 2*60)
+% get_obs('Tail beat amp', 'fps', 60, 'numTargets', 1, 'TrialtimeMin', 2, 'FishLengthPix', 40, 'TrajSec', 2*60)
+%
+
 
 addpath('../');
 
@@ -111,6 +118,7 @@ p.addParamValue('Coord', 0);
 p.addParamValue('TEDS', 30);
 p.addParamValue('TENB', 7);
 p.addParamValue('deltaWall', 3);
+p.addParamValue('FishLengthPix', 0);
 
 
 p.parse(varargin{:});
@@ -129,6 +137,7 @@ coord=p.Results.Coord;
 ds=p.Results.TEDS;
 nb=p.Results.TENB;
 dwall=p.Results.deltaWall;
+fpix=p.Results.FishLengthPix;
 
 %%%% processing
 if numel(find(fid~=0))>1
@@ -149,6 +158,10 @@ end
 
 if ~nmin
     error('TrialTimeMin must be specified');
+end
+
+if ~fpix && (strcmp('Tail beat freq', type) || strcmp('Tail beat amp', type))
+    error('Tail beat frequency and amplitude need fish length in pixels. See help.');
 end
 
 if ~sum(roi) && (strcmp('Freezing', type) || strcmp('Thrashing', type) || strcmp('Swimming', type))
@@ -252,10 +265,10 @@ switch type
         get_data=@(PathName, FileName) get_freq_into_region(PathName, FileName, nt, nfrm, fps, fid, regionbounds);
     case 'Tail beat freq'
         bin_centers=0:1:10; units='(Hz)'; acr='tbf'; 
-        get_data=@(PathName, FileName) get_tbf(PathName, FileName, nt, nfrm, fps, fid);
+        get_data=@(PathName, FileName) get_tbf(PathName, FileName, nt, nfrm, fps, fid, trajsec, fpix);
     case 'Tail beat amp'
-        bin_centers=0:1:1; units='()'; acr='tba'; 
-        get_data=@(PathName, FileName) get_tba(PathName, FileName, nt, nfrm, fps, fid);    
+        bin_centers=0:1:1; units='(pixels)'; acr='tba'; 
+        get_data=@(PathName, FileName) get_tba(PathName, FileName, nt, nfrm, fps, fid, trajsec, fpix);    
     case 'Transfer entropy'
         bin_centers=0:.2:2; units='(bits)'; acr='te12'; 
         get_data=@(PathName, FileName) get_trent(PathName, FileName, nt, nfrm, fps, coord, ds, nb, fid);
@@ -1331,7 +1344,7 @@ if size(permin,2)==1, permin=permin'; end
 dat=sum(dat,2);
 
 %% tail beat amplitude
-function [dat permin]=get_tba(PathName, FileName, nt, nfrm, fps, id)
+function [dat permin]=get_tba(PathName, FileName, nt, nfrm, fps, id, trajsec, fpix)
 
 debug=0;
 
@@ -1356,7 +1369,7 @@ for ii =1:size(FileName,2)
 
     tba_1=nan(nt, size(data.X,2));
     for ff=1:nt
-        [tbf, tba_1(ff,:)]=tbf_perfish(data.X, Xi, ff,fps);
+        [tbf, tba_1(ff,:)]=tbf_perfish(data.X, Xi, ff,fps, trajsec, fpix);
     end
     
     
@@ -1375,7 +1388,7 @@ if size(permin,2)==1, permin=permin'; end
 
 
 %% tail beat frequency
-function [dat permin]=get_tbf(PathName, FileName, nt, nfrm, fps, id)
+function [dat permin]=get_tbf(PathName, FileName, nt, nfrm, fps, id, trajsec, fpix)
 
 debug=0;
 
@@ -1419,7 +1432,7 @@ for ii =1:size(FileName,2)
 
     tbf_1=nan(nt, size(data.X,2));
     for ff=1:nt
-        tbf_1(ff,:)=tbf_perfish(data.X, Xi, ff,fps);
+        tbf_1(ff,:)=tbf_perfish(data.X, Xi, ff,fps, trajsec, fpix);
     end
     
     
@@ -1437,7 +1450,7 @@ permin=squeeze(nanmean(reshape(dat, [size(dat,1), size(dat,2)/nmin, nmin]), 2));
 if size(permin,2)==1, permin=permin'; end
 
 
-function [tbf_1 tba_1]=tbf_perfish(X, Xi, ff, fps)
+function [tbf_1 tba_1]=tbf_perfish(X, Xi, ff, fps, trajsec, fpix)
 
 dbg=0; % use this to plot the procedure for tbf
 
@@ -1455,8 +1468,8 @@ dbg=0; % use this to plot the procedure for tbf
 tbf_1=nan(1,size(X,2));
 tba_1=nan(1,size(X,2));
 
-xx=-40; % this value is in pixels on the screen; may change depending on the experimental setup
-xb=0:-1:xx;
+% this value is in pixels on the screen; may change depending on the experimental setup
+xx=-fpix/2; 
 
 Fs=fps; % sampling frequency
 
@@ -1469,7 +1482,7 @@ ey=a*xx^2 + b*xx;
 
 
 % pick sections of 2*fps
-for dd=1:2*fps:numel(ey)-2*fps
+for dd=1:trajsec*fps:numel(ey)-trajsec*fps
     idx=dd:dd+2*fps-1;
     ey1=ey(idx);
 
@@ -1487,7 +1500,7 @@ for dd=1:2*fps:numel(ey)-2*fps
 %     pwr=2*abs(Y(1:NFFT/2+1));
     if dbg
         figure(10); gcf; clf;
-        
+        xb=0:-1:xx;
         a1=a(idx);
         b1=b(idx);
         subplot(1,3,1); gca;
