@@ -114,7 +114,8 @@ if view_type==3
         elseif trktype==1
             [X P]=mttkf2d(X, P,  Zk1, 1/fps, calib, 1);
         elseif trktype==2
-            [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
+            error('shape tracker under maintenance!');
+%             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
         elseif trktype==3
             [X P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
         end

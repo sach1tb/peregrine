@@ -7,7 +7,7 @@ function get_obs(type, varargin)
 % 'Speed'
 % 'Distance covered'
 % 'Coord pos'
-% 'Absolute turn rate'
+% 'Absolute turn ratae'
 % 'Freezing'
 % 'Thrashing'
 % 'Swimming'
