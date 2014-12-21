@@ -114,8 +114,8 @@ if view_type==3
         elseif trktype==1
             [X P]=mttkf2d(X, P,  Zk1, 1/fps, calib, 1);
         elseif trktype==2
-            error('shape tracker under maintenance!');
-%             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
+%             error('shape tracker under maintenance!');
+            [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
         elseif trktype==3
             [X P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
         end
@@ -439,16 +439,16 @@ for jj=1:size(stats,1)
     end
     if debug
         if ~isempty(stats)
-        wTb=[stats(jj).hd, [-stats(jj).hd(2), stats(jj).hd(1)]', stats(jj).Centroid'; 0 0 1];
-        pixb=tra2b(pix', inv(wTb));
-        xx=pixb(1,:)';
-        A=[xx.^2, xx];
-        yy=A*stats(jj).p;
-        pixw=tra2b([xx,yy]', wTb);
-        quiver(stats(jj).Centroid(1), stats(jj).Centroid(2), ...
-                        stats(jj).hd(1), stats(jj).hd(2), 10, 'r');
-        plot(pixw(1,:), pixw(2,:), 'g.', 'markersize', 4);
-        pixw_out(jj).pts=pixw;
+            wTb=[stats(jj).hd, [-stats(jj).hd(2), stats(jj).hd(1)]', stats(jj).Centroid'; 0 0 1];
+            pixb=tra2b(pix', inv(wTb));
+            xx=pixb(1,:)';
+            A=[xx.^2, xx];
+            yy=A*stats(jj).p;
+            pixw=tra2b([xx,yy]', wTb);
+            quiver(stats(jj).Centroid(1), stats(jj).Centroid(2), ...
+                            stats(jj).hd(1), stats(jj).hd(2), 10, 'r');
+            plot(pixw(1,:), pixw(2,:), 'g.', 'markersize', 4);
+            pixw_out(jj).pts=pixw;
         end
     end
 end

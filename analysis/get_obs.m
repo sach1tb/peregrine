@@ -1475,6 +1475,11 @@ r=getind(Xi.nX, 1, ff, 1:Xi.nX,1);
 a=X(r(Xi.sh(1)),:); 
 b=X(r(Xi.sh(2)),:);
 
+% heading
+hd=X(r(Xi.hd),:); 
+% position
+pos=X(r(Xi.ri),:);
+
 % the furthest point on the tip of the tail
 ey=a*xx^2 + b*xx;
 
@@ -1492,14 +1497,31 @@ for dd=1:trajsec*fps:numel(ey)-trajsec*fps
 
     % set this to 1 or 0 to plot the tail-tip and see how fft is working
     if 0
-        figure(10); gcf; clf;
+        
         xb=0:-1:xx;
         a1=a(idx);
         b1=b(idx);
-        
-        % raw tail-tip
-        subplot(1,3,1); gca;
         yb=(xb.^2)'*a1 + (xb)'*b1;
+        
+        % show on the images
+%         figure(11); gcf; clf;
+%         for k=idx
+%             hd=hd(:,k);
+%             pos=pos(:,k);
+%             wTb=[hd, [-hd(2), hd(1)]', pos; 0 0 1];
+%             pixw=tra2b([xb;yb(:,k)'], wTb);
+%             subplot(2,2,1); gca;
+%             floc='./Users/sachit/Projects/sandbox/alcohol_tail_dynamics/Frames/';
+%             id='00_20141015_1450_';
+%             imshow(imread([floc, id, sprintf('%.6d', dd)]));
+%             hold on;
+%             quiver(pos(1), pos(2), hd(1), hd(2), 10, 'r');
+%             plot(pixw(1,:), pixw(2,:), 'g.', 'markersize', 4);
+%         end
+
+        % raw tail-tip
+        figure(10); gcf; clf;
+        subplot(1,3,1); gca;
         for jj=1:numel(a1)
             plot(xb, yb(:,jj), 'color', ones(1,3)*(.35+.65*jj/numel(a1)), 'linewidth', 3);
             hold on;
@@ -1523,10 +1545,10 @@ for dd=1:trajsec*fps:numel(ey)-trajsec*fps
 
         % show fft and magnitude
         subplot(1,3,3); gca;
-        plot(freq, mag); hold on;
+        plot(freq, mag, 'k', 'linewidth', 2); hold on;
         set(gca, 'fontsize', 24);
-        xlabel('Frequency (Hz)')
-        ylabel('Magnitude')
+        xlabel('frequency (Hz)')
+        ylabel('magnitude (pixels sec)')
         plot(freq(idx2), mag(idx2), 'bx', 'linewidth', 4, 'markersize', 10);
         title(sprintf('%.1f Hz, %.1f pixels amplitude', freq(idx2), mag(idx2)*2));
         drawnow;

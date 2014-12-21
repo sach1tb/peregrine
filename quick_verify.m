@@ -58,9 +58,9 @@ else
     if size(X,2)>10
         fl=ceil(sqrt(Xtr(curr,7)/3)*2);
         if ~isempty(fl), fl=fl(1); else fl=15; end
-        hd=Xtr(curr,11:12)';
+        hd=Xtr(curr,11:12)'; % 11:12 because the first two columns are time and id
         quiver(xcur, ycur, hd(1,:)'*10, hd(2,:)'*10, 0, 'r');
-        shape=Xtr(curr,9:10)';
+        shape=Xtr(curr,9:10)'; % ** 9:10 because the first two columns are time and id
         for ff=1:size(hd,2)
             wTb=[hd(:,ff), [-hd(2,ff), hd(1,ff)]', [xcur(ff), ycur(ff)]'; 0 0 1];
             xx=(-fl:fl)'; % based on 1:3 ratio between width and length
