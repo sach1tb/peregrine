@@ -29,7 +29,8 @@ img=getfrm(k);
 nZ=0;
 
 [fg bg]=preproc(img, fgislight, smooth, img_t, bin_t, bg, alpha, ...
-                    roi_crop, circ, roi_cut, blur, bb_blur, area_t, split, shape, sz, bb_size, frame);
+                    roi_crop, circ, roi_cut, blur, bb_blur, area_t, split,...
+                    shape, sz, bb_size, frame);
 if live1
     if ~bgyes
         imshow(img);
@@ -61,7 +62,8 @@ if view_type==2
         if mod(k,20);
             nzi=find(roi_cut(:,1)~=0);
             for jj=nzi'
-                rectangle('position', roi_cut(jj,:), 'linestyle', '--', 'edgecolor', 'w');
+                rectangle('position', roi_cut(jj,:), 'linestyle', '--', ...
+                            'edgecolor', 'w');
             end
         end
     end
@@ -115,12 +117,14 @@ if view_type==3
             [X P]=mttkf2d(X, P,  Zk1, 1/fps, calib, 1);
         elseif trktype==2
 %             error('shape tracker under maintenance!');
-            [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
+%             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
+            [X P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, 0);
         elseif trktype==3
             [X P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
         end
         frame(k).X=X(X(:,1)==k, :);
         frame(k).P=P(P(:,1)==k, :);
+        
     catch ME
         fprintf('[!] Error; saving workspace ....\n');
         wsp=sprintf('./err_%s.mat', datestr(now, 'yyyymmddTHHMMSS'));
@@ -251,8 +255,9 @@ if ~isempty(stats)
     bb=cat(1,stats.BoundingBox);
 end
 
-function [fg bg]=preproc(img, fgislight, smooth, img_t, bin_t, bg, bg_rupdate_alpha, ...
-                    roi_crop, circ, roi_cut, blur, bb_blur, area_t, split, shape, sz, bb_size, frame)
+function [fg bg]=preproc(img, fgislight, smooth, img_t, bin_t, ...
+                        bg, bg_rupdate_alpha, roi_crop, circ, roi_cut, ...
+                        blur, bb_blur, area_t, split, shape, sz, bb_size, frame)
 
 [ih, iw, id]=size(img);
 if id > 1, img=rgb2gray(img); end
@@ -294,7 +299,9 @@ if bb_blur(3)
         for jj=idx
             bb_iter=ceil(bb(jj,:));
             ext=bb_blur(4);
-            bb_iter=[max(bb_iter(1)-ext,1), max(bb_iter(2)-ext,1), min(bb_iter(3)+2*ext, iw-bb_iter(1)-1), min(bb_iter(4)+2*ext, ih-bb_iter(2)-1)];
+            bb_iter=[max(bb_iter(1)-ext,1), max(bb_iter(2)-ext,1), ...
+                     min(bb_iter(3)+2*ext, iw-bb_iter(1)-1), ...
+                     min(bb_iter(4)+2*ext, ih-bb_iter(2)-1)];
     %         try
             bb_fg=fg(bb_iter(2):bb_iter(2)+bb_iter(4), bb_iter(1):bb_iter(1)+bb_iter(3));
     %         catch
