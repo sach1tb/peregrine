@@ -847,9 +847,17 @@ for ff=1:size(r1,1)
         for jj=2:size(rt,2)
             dist(1,jj-1)=norm(rt(:,1)- rt(:,jj));
         end
+        % this part is to ensure that acceleration is downsampled to 7 Hz
+        % if it is more to match with the paper 
+        test_accel=accel(ff,ii:ii+n-1);
+        if fps > 7 % 7 Hz as per Vlad's paper
+            test_accel = test_accel(round(1:numel(test_accel)/(7*tsec):numel(test_accel)));
+        else
+            error('frame rate has to be more than 6 Hz to observe thrashing');
+        end
         if max(dist(1,:))<dist_t && ~sum(dist==0) % if the fish stayed within a ball of radius dist_t
-            if numel(roi)==2
-                if sum(accel(ff,ii:ii+n-1)) > acc_t && ... % if the fish is accelerating above a value 
+            if numel(roi)==2    
+                if sum(test_accel) > acc_t && ... % if the fish is accelerating above a value 
                     (sum(abs(rt(1,:))>roi(1)/2-dwall) || ... % if the fish is near the wall, i.e., 
                     sum(abs(rt(2,:))>roi(2)/2-dwall))        % the fish position is within a delta of the wall
                     thrash(ii:ii+n-1)=1;
@@ -857,7 +865,7 @@ for ff=1:size(r1,1)
                     freeze(ii:ii+n-1)=1;
                 end
             elseif numel(roi)==4
-                if sum(accel(ff,ii:ii+n-1)) > acc_t && ...
+                if sum(test_accel) > acc_t && ...
                     (sum(rt(1,:)<roi(1)+dwall) || ...
                      sum(rt(2,:)<roi(2)+dwall) || ...
                      sum(rt(1,:)>roi(3)-dwall) || ...
