@@ -17,8 +17,8 @@ switch offline
         try
             cat(1,frmlist.name);
         catch me_err
-            fprintf('[!] Improper filenames.. the numbers should be padded with zeros for all filenames to be of the same length\n');
-            %padzero(setup.frmloc, setup.image_id, ~preproc.batchmode);
+            fprintf('[!] Improper filenames... all filenames to be of the same length.\n');
+            fprintf('[I] Run padzero. Use help padzero to see how to run first\n');
         end
         
         nfrm=size(frmlist,1);
@@ -101,3 +101,5 @@ if ~isempty(bglist)
 else
     bg=img;
 end
+
+

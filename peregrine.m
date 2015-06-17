@@ -1051,17 +1051,17 @@ guidata(hObject, handles);
 
 function handles=change_prefs(handles)
 
-prompt={'Foreground is dark';... % 1
+prompt={'Foreground is darker (0=no, 1=yes):';... % 1
         'Frame rate:'; ... % 2
         'Number of targets (approx.):'; ... %3
         'Blurring big blobs (width, height, sigma, extension):'; ... % 4
         'Blurring blob size (pixels):'; ... % 5
-        'Tracker type :'; ... % 6 (0=kf+gnn, 1=kf+gnn+nn, 2=pf+gnn)
+        'Tracker type (0=kf+gnn, 1=kf+gnn+nn, 2=pf+gnn) :'; ... % 6 
         'Record frames'; ... % 7 during verification
-        'length, breadth of roi in cm'; ... % 8
-        'shape of ROI'; ... % 9 (0=square, 1=circle)
-        'Split occlusions'; ... % 10 (1=yes, 0=no. slow and only if similar targets present)
-        'Shape tracking '; ... %11 (1=yes, 0=no. fish only)
+        'Region of Interest (ROI) size (length, breadth in cm)'; ... % 8
+        'Shape of ROI (0=square, 1=circle):'; ... % 9 
+        'Split occlusions (1=yes, 0=no):'; ... % 10 (slow and only if similar targets present)
+        'Shape tracking (1=yes, 0=no. for fish only): '; ... %11 
         'Running background alpha (<1)'}; % build (any number less than 1=running, 0=highest intensity)
 name='Preferences';
 

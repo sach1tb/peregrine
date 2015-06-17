@@ -13,7 +13,7 @@
 \usepackage{bm}  % assumes amsmath package installed
 \usepackage{enumerate}  % assumes amsmath package installed
 \usepackage{hyperref}
-
+\usepackage{color}
 
 \def\bs{\boldsymbol}
 \def\mb{\mathbb}
@@ -43,35 +43,55 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-Peregrine is an automated tracking system developed to analyse and study animal behaviour. Versions of this tracking system have been used/developed as part of \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c, Ladu2014, Bartolini2014}. Please refer to those for technical details. This document describes basic steps to get started and use peregrine. 
-
 \begin{figure}[ht]
 \centering
 \includegraphics[width=.995\linewidth]{screenshot}
-\caption{Tracking shape and orientation of three fish in a flow tank. Two fish on the top are occluded}
+\caption{Tracking shape and orientation of three fish in a flow tank.}
 \label{fig:sample_tracks}
 \end{figure}
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=.995\linewidth]{output}
-\caption{Output of the tracker is stored in a csv file where each column corresponds to a single frame and a single target.}
+\caption{Output of the tracker is stored in a csv file where each \textbf{row} corresponds to a single target in a single frame. Table \ref{tab:csvcolumns} lists the column ids. }
 \label{fig:output}
 \end{figure}
+Peregrine is an automated tracking system developed to analyse and study animal behaviour. Versions of this tracking system have been used/developed as part of \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c, Ladu2014, Bartolini2014}. Please refer to those for technical details. This document describes basic steps to get started and use peregrine. 
 
-\section{Preferences and initial setup}
-\begin{figure}[h]
+\section{Initial setup}
+\begin{figure}[ht]
 \centering
-\includegraphics[width=.495\linewidth]{prefs}
+\includegraphics[width=.295\linewidth]{prefs}
 \caption{Preferences}
 \label{fig:prefs}
 \end{figure}
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.995\linewidth]{thresholds}
+\caption{Setting thresholds to achieve the best possible tracking performance. (a) raw video; (b) with background checked and thresholds set; and (c) after selecting ``mark'' in the view type. Note the circular region of interest (ROI) as a blue dotted line.}
+\label{fig:thresholds}
+\end{figure}
+Peregrine is developed in MATLAB and shared using a dropbox folder. For best results the input to peregrine should be in the form of frames with sequential filenames. The length of each filename should be the same, for example, exp01\_001.bmp, exp01\_002.bmp, exp01\_003.bmp, and so on. 
+\begin{enumerate}
+\item Ensure all video frames are in a single folder
+\item Change MATLAB current folder to where peregrine is located
+\item Type \emph{peregrine} on the command window and select File $\rightarrow$ open. Select any frame from the list of frames.
+\item Press start to check if the video is playing properly.
+\item Check the Background checkbox. Now, using the sliders ``Target contrast'' and ``Target intensity'' try to have the foreground only visible as white blobs on the screen. \textcolor{blue}{Set ``Target contrast'' to 0 if the targets are moving very slowly or remain still in some frames.}
+\item Use the crop tool next to the background to Crop a region of interest; you may also remove unwanted areas within the region of interest using the button next to it (not recommended as this will also make the targets invisible if they enter such region, however recommended if there is a persistent noise source in that area).
+\item Select the ``Mark'' radio button in the View type to see if all targets are selected (Fig. \ref{fig:thresholds}). Verify the count status on the right of the ``Live'' button.
+\item Select Edit $\rightarrow$ preferences to set preferences (Fig. \ref{fig:prefs}). Most values can remain as default except ``Region of Interest (ROI) size (length, breadth in cm)'' and ``Shape of ROI (0=square, 1=circle)'', which should be specified as per the video. Setting ``Split occlusions=1'' allows occlusions to be resolved but should only be used if the target shapes can be approximated as ellipses (e.g. fish, bugs)
+\item If you obtain consistent targets and most of your targets are seen marked in the ``mark'' view-type, then press save and move to Tracking.
+\end{enumerate}
+
+
 \section{Tracking}
-
+Peregrine allows two types of tracking: position and shape. Position tracking outputs the target position and velocity for multiple targets and shape tracking outputs shape information in the form of coefficients of a parabola fit on the target midline. 
 \subsection{Position and velocity tracking}
-Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. 
+Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. To start tracking, first check that all preferences are set properly including \textcolor{blue}{ROI size and shape} and most targets are marked in most of the frames. Ensuring this will reduce the time spent in repairing the tracks. 
 
+Now bring the slider to zero position and view-type to track. If you want to run the tracker without recording to see how the tracker performs press start. If everything looks okay, then stop, bring the slider back again and check the checkbox next to the track view to record the tracks. Now press start again. To speed up the tracker, you can toggle the ``live'' button. \textbf{Make sure to press save once the tracking is done}.
 \subsection{Shape tracking}
 The shape tracking follows the approach described in \cite{Bartolini2014}. Briefly, the measurements consist of a centroid, orientation, and two shape parameters that represent a parabola in the body frame. The parabola and corresponding orientation is found by brute-force search. The final measurements are fed into a particle filter with 200 particles. 
 In the case of Shape tracking the csv file is ordered as:
@@ -99,7 +119,7 @@ column no. &  variable \\
 \end{tabular}
 %}
 \end{center}
-\label{tab:params}
+\label{tab:csvcolumns}
 \end{table}
 
 
@@ -183,8 +203,7 @@ Also refer to the example in \url{http://www.mathworks.in/help/matlab/ref/fft.ht
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Acknowledgement}
-The authors would like to acknowledge assistance from Dynamical Systems Laboratory, Polytechnic Institute of New York University, and Collective Dynamics and Control Laboratory, University of Maryland.
-
+The authors would like to acknowledge assistance (development and testing) from Dynamical Systems Laboratory, New York University, and Collective Dynamics and Control Laboratory, University of Maryland.
 
 \bibliographystyle{unsrt}
 \bibliography{$HOME/Reference/bibfiles/library}
