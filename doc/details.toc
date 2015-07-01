@@ -1,0 +1,15 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
+\contentsline {section}{\numberline {2}Initial setup}{2}{section.2}
+\contentsline {section}{\numberline {3}Tracking}{4}{section.3}
+\contentsline {subsection}{\numberline {3.1}Position and velocity tracking}{4}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Shape tracking}{5}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Three-dimensional tracking}{6}{subsection.3.3}
+\contentsline {subsubsection}{\numberline {3.3.1}Camera calibration}{6}{subsubsection.3.3.1}
+\contentsline {paragraph}{For intrinsic calibration for each camera:}{7}{section*.2}
+\contentsline {paragraph}{For extrinsic calibration:}{8}{section*.3}
+\contentsline {subsubsection}{\numberline {3.3.2}Three-dimensional reconstruction}{8}{subsubsection.3.3.2}
+\contentsline {subsection}{\numberline {3.4}Command line mode}{9}{subsection.3.4}
+\contentsline {section}{\numberline {4}Repair mode}{9}{section.4}
+\contentsline {section}{\numberline {5}Keyboard shortcuts}{9}{section.5}
+\contentsline {section}{\numberline {6}Global observations}{9}{section.6}
+\contentsline {section}{\numberline {7}Acknowledgement}{12}{section.7}

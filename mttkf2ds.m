@@ -1,5 +1,5 @@
-function [Xr Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, da_type)
-%function [Xr Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, da_type)
+function [Xr, Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, target, mode)
+%function [Xr Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, target, mode)
 %
 % 2D kalman filter
 % Xr is the [* x 6+2] row matrix for the current time step from the csv file
@@ -7,7 +7,7 @@ function [Xr Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, da_type)
 % Zk is the [3 x *] matrix measurement for the current time step
 % dt is the time between frames (e.g. 1/30 seconds)
 % calib is the calibration matrix for the camera
-% da_type is for data association, set it to 0
+
 
 global k
 global trklen
@@ -56,9 +56,24 @@ else
     idnew=max(ids)+1;
 end
 
-
-X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
-P0=eye(n)*2; P0(3,3)=10; P0(4,4)=10; P0(n, n)=0;
+switch target
+    case 0 % zebrafish
+        % sqrt of these values is the std for the process noise; 
+        % 0 in the last column implies that this value stays constant
+        Q=diag([0 0 9 9 9 0 1 1 1 1]); 
+        X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
+        P0=eye(n)*0; P0(3,3)=25; P0(4,4)=25; P0(5,5)=9; P0(7:n,7:n)=eye(n-7+1);
+    case 1 % pillbugs
+        Q=diag([.5 .5 1 1 5 0 1 1 1 1]);
+        X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
+        P0=eye(n)*0; P0(3,3)=1; P0(4,4)=1; P0(5,5)=5; P0(7:n,7:n)=eye(n-7+1);
+    case 2 % danios
+        % sqrt of these values is the std for the process noise; 
+        % 0 in the last column implies that this value stays constant
+        Q=diag([2 2 9 9 9 0 1 1 1 1]); 
+        X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
+        P0=eye(n)*0; P0(3,3)=36; P0(4,4)=36; P0(5,5)=9; P0(7:n,7:n)=eye(n-7+1);
+end
 
 nZk=size(Zk,2);
 
@@ -76,18 +91,16 @@ initialize=@(k, Zk, idnew) init(k, Zk(1:m,:), Hinv, X0, P0, n, ci, idnew);
 
 % --- f_predict (motion model)
 [F, Fk]=motion_model(dt, n);
-Q=diag([2 2 10 10 5 0 1 1 1 1]); %sqrt of these values is the std for the process noise; 0 in the last column implies that this value stays constant
 f_predict=@(k, Xh, P) kalmanPredictMT(k, Xh, P, F, Q, n);
 
 % --- associate
-switch da_type
+switch mode
     case {0, 'gnn'}
-        da1=@(D) gnnda(D, gt); 
-    case {1, 'gnn+nnda'}
-        da1=@(D) gnnda_nnda(D, gt); 
-    case {3, 'nnda'}
+        da1=@(D) gnnda(D, gt);  
+    case {1, 'nnda'}
         da1=@(D) nnda(D);
 end
+
 
 % --- measurement model
 zhat=@(k, r, Xh) Hk*Xh(r, k);

@@ -3,7 +3,11 @@
 \BOOKMARK [1][-]{section.3}{Tracking}{}% 3
 \BOOKMARK [2][-]{subsection.3.1}{Position and velocity tracking}{section.3}% 4
 \BOOKMARK [2][-]{subsection.3.2}{Shape tracking}{section.3}% 5
-\BOOKMARK [2][-]{subsection.3.3}{Repair mode}{section.3}% 6
-\BOOKMARK [2][-]{subsection.3.4}{Command line mode}{section.3}% 7
-\BOOKMARK [1][-]{section.4}{Global observations}{}% 8
-\BOOKMARK [1][-]{section.5}{Acknowledgement}{}% 9
+\BOOKMARK [2][-]{subsection.3.3}{Three-dimensional tracking}{section.3}% 6
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Camera calibration}{subsection.3.3}% 7
+\BOOKMARK [3][-]{subsubsection.3.3.2}{Three-dimensional reconstruction}{subsection.3.3}% 8
+\BOOKMARK [2][-]{subsection.3.4}{Command line mode}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Repair mode}{}% 10
+\BOOKMARK [1][-]{section.5}{Keyboard shortcuts}{}% 11
+\BOOKMARK [1][-]{section.6}{Global observations}{}% 12
+\BOOKMARK [1][-]{section.7}{Acknowledgement}{}% 13

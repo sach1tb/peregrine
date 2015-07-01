@@ -1,4 +1,4 @@
-function [bg nZ X P datfile cm2pix, sz1, mesg, frame]=onestep(sides_cm, img_t,...
+function [bg, nZ, X, P, datfile, cm2pix, sz1, mesg, frame]=onestep(sides_cm, img_t,...
                                 bin_t, area_t, fgislight, circ, smooth, bg, alpha, ...
                                 blur, bb_blur, bb_size, X, P, fps, ...
                                 datfile, getfrm, bgyes, trktype, ...
@@ -11,7 +11,7 @@ global k
 global live1
 global rp_id
 global zoom_val
-global trklen
+
 
 mesg=struct('txt', '');
  
@@ -28,7 +28,7 @@ img=getfrm(k);
 
 nZ=0;
 
-[fg bg]=preproc(img, fgislight, smooth, img_t, bin_t, bg, alpha, ...
+[fg, bg]=preproc(img, fgislight, smooth, img_t, bin_t, bg, alpha, ...
                     roi_crop, circ, roi_cut, blur, bb_blur, area_t, split,...
                     shape, sz, bb_size, frame);
 if live1
@@ -67,7 +67,7 @@ if view_type==2
             end
         end
     end
-    [Zk ns_area bb frame]=getZ(fg, area_t, split, shape, sz, frame);
+    [Zk, ns_area, ~, frame]=getZ(fg, area_t, split, shape, sz, frame);
     nZ=size(Zk,2);
     % ensure that we are getting good shape parameters
     if shape
@@ -91,7 +91,7 @@ if view_type==3
     if live1, hold on; end
     
     %%% get measurements
-    [Zk1 ns_area bb frame]=getZ(fg, area_t, split, shape, sz, frame);
+    [Zk1, ns_area, ~, frame]=getZ(fg, area_t, split, shape, sz, frame);
     
     % ensure that we are getting good shape parameters
     if shape
@@ -107,21 +107,22 @@ if view_type==3
 
     %%% change trackers here...
     try
-        if shape && trktype ~=2
-            error('[!] if tracking shape tracker type should be 2');
-        end
+%         if shape && trktype ~=2
+%             error('[!] if tracking shape tracker type should be 2');
+%         end
         
-        if trktype==0
-            [X P]=mttkf2d(X, P,  Zk1, 1/fps, calib, 0);
-        elseif trktype==1
-            [X P]=mttkf2d(X, P,  Zk1, 1/fps, calib, 1);
-        elseif trktype==2
-%             error('shape tracker under maintenance!');
-%             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
-            [X P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, 0);
-        elseif trktype==3
-            [X P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
+        if ~shape
+            [X, P]=mttkf2d(X, P,  Zk1, 1/fps, calib, trktype, 0);  
+        else
+            [X, P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, trktype, 0);
         end
+%         elseif trktype==2
+% %             error('shape tracker under maintenance!');
+% %             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
+%             [X, P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, 0);
+%         elseif trktype==3
+%             [X, P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
+%         end
         frame(k).X=X(X(:,1)==k, :);
         frame(k).P=P(P(:,1)==k, :);
         
@@ -219,7 +220,7 @@ if live1
 end
 
 
-function [Zk ns_area bb frame]=getZ(fg, area_t, split, shape, sz, frame)
+function [Zk, ns_area, bb, frame]=getZ(fg, area_t, split, shape, sz, frame)
 
 global k
 
@@ -239,7 +240,7 @@ if ~isempty(stats)
     end
     
     if shape
-        [stats pixw]=curve_fit(stats); 
+        [stats, ~]=curve_fit(stats); 
         Zk=[cat(1,stats.Centroid)';
             cat(1,stats.Area)';
             cat(2, stats.p);
@@ -255,7 +256,7 @@ if ~isempty(stats)
     bb=cat(1,stats.BoundingBox);
 end
 
-function [fg bg]=preproc(img, fgislight, smooth, img_t, bin_t, ...
+function [fg, bg]=preproc(img, fgislight, smooth, img_t, bin_t, ...
                         bg, bg_rupdate_alpha, roi_crop, circ, roi_cut, ...
                         blur, bb_blur, area_t, split, shape, sz, bb_size, frame)
 
@@ -289,13 +290,13 @@ if blur(3)
 %         fg=filter2(fspecial('disk', blur(3)), fg);
 end
 
-bb=[];
+
 if bb_blur(3)
     fg=double(fg);
-    [Zk ns_area bb frame]=getZ(fg, area_t, split, shape, sz, frame);
+    [Zk, ~, bb, ~]=getZ(fg, area_t, split, shape, sz, frame);
     
     if ~isempty(Zk)
-        [val idx]=find(Zk(3,:)>bb_size);
+        [~, idx]=find(Zk(3,:)>bb_size);
         for jj=idx
             bb_iter=ceil(bb(jj,:));
             ext=bb_blur(4);
@@ -399,7 +400,7 @@ for jj=1:size(stats,1)
     if ~isempty(pix) && size(pix,1) > 20 % the number of pixels must be enough to fit the curve
         % update the centroid to fall on the actual fish body
         old_centr=stats(jj).Centroid';
-        [val idx]=min(sum((pix'-old_centr*ones(1,size(pix,1))).^2));
+        [~, idx]=min(sum((pix'-old_centr*ones(1,size(pix,1))).^2));
         body_pix=pix(idx,:)';
         shift_vec=body_pix-old_centr;
         if norm(shift_vec) > 1 % shift a bit more if the distance was more than 1

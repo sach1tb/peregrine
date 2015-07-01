@@ -8,7 +8,9 @@ switch offline
         fps=0;
         if ~isempty(filename)
             ln=numel(filename);
-            id=[filename(1), '*.*', filename(ln-2:ln)];
+            % this will store the extension as well
+            % assumes that the extension is a 3 letters
+            id=[filename(1), '*.', filename(ln-2:ln)];
         else
             id='raw*.*'; % if you pass a direct argument
         end

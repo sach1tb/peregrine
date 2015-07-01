@@ -1,90 +1,99 @@
 \begin{thebibliography}{10}
 
 \bibitem{Butail2011}
-S.~Butail and D.~A. Paley.
+S~Butail and D~A Paley.
 \newblock {Three-dimensional reconstruction of the fast-start swimming
   kinematics of densely schooling fish}.
 \newblock {\em Journal of the Royal Society Interface}, 9(66):77--88, 2011.
 
 \bibitem{Butail2012b}
-S.~Butail, N.~C. Manoukis, M.~Diallo, J.~M.~C. Ribeiro, T.~Lehmann, and D.~A.
-  Paley.
+S~Butail, N~C Manoukis, M~Diallo, J~M~C Ribeiro, T~Lehmann, and D~A Paley.
 \newblock {Reconstructing the flight kinematics of swarming and mating in wild
   mosquitoes}.
 \newblock {\em Journal of the Royal Society Interface}, 9(75):2624--2638, 2012.
 
 \bibitem{Butail2012c}
-S.~Butail.
+S~Butail.
 \newblock {\em {Motion Reconstruction of Animal Groups: From Schooling Fish to
   Swarming Mosquitoes}}.
 \newblock PhD thesis, University of Maryland, College Park, 2012.
 
 \bibitem{Butail2013c}
-S.~Butail, T.~Bartolini, and M.~Porfiri.
+S~Butail, T~Bartolini, and M~Porfiri.
 \newblock {Collective response of zebrafish shoals to a free-swimming robotic
   fish}.
 \newblock {\em PLoS One}, 8(10):e76123, 2013.
 
 \bibitem{Ladu2014}
-F.~Ladu, S.~Butail, S.~Macr\`{\i}, and M.~Porfiri.
+F~Ladu, S~Butail, S~Macr\`{\i}, and M~Porfiri.
 \newblock {Sociality modulates the effects of ethanol in zebrafish}.
 \newblock {\em Alcoholism, Clinical and Experimental Research},
   38(7):2096--2104, 2014.
 
-\bibitem{Bartolini2014}
-T.~Bartolini, S.~Butail, and M.~Porfiri.
+\bibitem{Bartolini2015}
+T~Bartolini, S~Butail, and M~Porfiri.
 \newblock {Temperature influences sociality and activity of freshwater fish}.
-\newblock {\em Environmental Biology of Fishes}, August 2014.
+\newblock {\em Environmental Biology of Fishes}, 98(3):825--832, 2015.
+
+\bibitem{Miller2012}
+N~Miller and R~Gerlai.
+\newblock {From schooling to shoaling: patterns of collective motion in
+  zebrafish (Danio rerio)}.
+\newblock {\em PLoS One}, 7(11):e48865, 2012.
 
 \bibitem{BarShalom1987}
-Y.~Bar-Shalom.
+Y~Bar-Shalom.
 \newblock {\em {Tracking and data association}}.
 \newblock Academic Press Professional, Inc., San Diego, CA, USA, 1987.
 
 \bibitem{Kuhn1955}
-H.~W. Kuhn.
+H~W Kuhn.
 \newblock {The Hungarian method for the assignment problem}.
 \newblock {\em Naval Research Logistic Quarterly}, 2:83--97, 1955.
 
+\bibitem{BouguetCalibrationToolbox}
+Jean-Yves Bouguet.
+\newblock {Camera Calibration Toolbox for Matlab}, 2010.
+
 \bibitem{Webster2007}
-M.~M. Webster, J.~Goldsmith, A.~J.~W. Ward, and P.~J.~B. Hart.
+M~M Webster, J~Goldsmith, A~J~W Ward, and P~J~B Hart.
 \newblock {Habitat-specific chemical cues influence association preferences and
   shoal cohesion in fish}.
 \newblock {\em Behavioral Ecology and Sociobiology}, 62(2):273--280, 2007.
 
 \bibitem{Kolpas2008}
-A.~Kolpas, J.~Moehlis, T.~A. Frewen, and I.~G. Kevrekidis.
+A~Kolpas, J~Moehlis, T~A Frewen, and I~G Kevrekidis.
 \newblock {Coarse analysis of collective motion with different communication
   mechanisms.}
 \newblock {\em Mathematical Biosciences}, 214(1-2):49--57, 2008.
 
 \bibitem{Vicsek1995}
-T.~Vicsek, A.~Czir\'{o}k, E.~Ben-Jacob, I.~Cohen, and O.~Shochet.
+T~Vicsek, A~Czir\'{o}k, E~Ben-Jacob, I~Cohen, and O~Shochet.
 \newblock {Novel type of phase transition in a system of self-driven
   particles}.
 \newblock {\em Physical Review Letters}, 75(6):1226--1229, 1995.
 
 \bibitem{Chuang2007}
-Y.~Chuang, M.~R. D'Orsogna, D.~Marthaler, A.~L. Bertozzi, and L.~S. Chayes.
-\newblock {State transitions and the continuum limit for a 2D interacting,
+Y~Chuang, M~R D'Orsogna, D~Marthaler, A~L Bertozzi, and L~S Chayes.
+\newblock {State transitions and the continuum limit for a \{2D\} interacting,
   self-propelled particle system}.
 \newblock {\em Physica D: Nonlinear Phenomena}, 232(1):33--47, 2007.
 
 \bibitem{Couzin2003a}
-I.~D. Couzin and N.~R. Franks.
+I~D Couzin and N~R Franks.
 \newblock {Self-organized lane formation and optimized traffic flow in army
   ants.}
-\newblock {\em Proceedings of the Royal Society B Biological Sciences},
+\newblock {\em Proceedings of the Royal Society B: Biological Sciences},
   270:139--146, 2003.
 
 \bibitem{Aureli2012}
-M.~Aureli, F.~Fiorilli, and M.~Porfiri.
+M~Aureli, F~Fiorilli, and M~Porfiri.
 \newblock {Portraits of self-organization in fish schools interacting with
   robots}.
 \newblock {\em Physica D: Nonlinear Phenomena}, 241(9):908--920, 2012.
 
 \bibitem{Kopman2013}
-V.~Kopman, J.~Laut, G.~Polverino, and M.~Porfiri.
+V~Kopman, J~Laut, G~Polverino, and M~Porfiri.
 \newblock {Closed-loop control of zebrafish response using a bioinspired
   robotic-fish in a preference test}.
 \newblock {\em Journal of the Royal Society Interface}, 10(78):20120540, 2013.

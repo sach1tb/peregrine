@@ -1,4 +1,4 @@
-\documentclass[12pt]{article} 
+\documentclass[11pt]{article} 
 
 %\documentclass[11pt, onecolumn]{ieeeconf}
 %\linespread{1.3}
@@ -24,7 +24,7 @@
 \title{Peregrine: help}
 
 %%% first author
-\author{Sachit Butail}
+\author{}
 
 \date{}
 
@@ -32,6 +32,8 @@
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 \thispagestyle{empty}
 \pagestyle{empty}
 
@@ -39,7 +41,6 @@
 %\begin{abstract}
 %Peregrine is an automated tracking system for studying collective animal behavior. 
 %\end{abstract}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
@@ -56,47 +57,9 @@
 \caption{Output of the tracker is stored in a csv file where each \textbf{row} corresponds to a single target in a single frame. Table \ref{tab:csvcolumns} lists the column ids. }
 \label{fig:output}
 \end{figure}
-Peregrine is an automated tracking system developed to analyse and study animal behaviour. Versions of this tracking system have been used/developed as part of \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c, Ladu2014, Bartolini2014}. Please refer to those for technical details. This document describes basic steps to get started and use peregrine. 
 
-\section{Initial setup}
-\begin{figure}[ht]
-\centering
-\includegraphics[width=.295\linewidth]{prefs}
-\caption{Preferences}
-\label{fig:prefs}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=.995\linewidth]{thresholds}
-\caption{Setting thresholds to achieve the best possible tracking performance. (a) raw video; (b) with background checked and thresholds set; and (c) after selecting ``mark'' in the view type. Note the circular region of interest (ROI) as a blue dotted line.}
-\label{fig:thresholds}
-\end{figure}
-Peregrine is developed in MATLAB and shared using a dropbox folder. For best results the input to peregrine should be in the form of frames with sequential filenames. The length of each filename should be the same, for example, exp01\_001.bmp, exp01\_002.bmp, exp01\_003.bmp, and so on. 
-\begin{enumerate}
-\item Ensure all video frames are in a single folder
-\item Change MATLAB current folder to where peregrine is located
-\item Type \emph{peregrine} on the command window and select File $\rightarrow$ open. Select any frame from the list of frames.
-\item Press start to check if the video is playing properly.
-\item Check the Background checkbox. Now, using the sliders ``Target contrast'' and ``Target intensity'' try to have the foreground only visible as white blobs on the screen. \textcolor{blue}{Set ``Target contrast'' to 0 if the targets are moving very slowly or remain still in some frames.}
-\item Use the crop tool next to the background to Crop a region of interest; you may also remove unwanted areas within the region of interest using the button next to it (not recommended as this will also make the targets invisible if they enter such region, however recommended if there is a persistent noise source in that area).
-\item Select the ``Mark'' radio button in the View type to see if all targets are selected (Fig. \ref{fig:thresholds}). Verify the count status on the right of the ``Live'' button.
-\item Select Edit $\rightarrow$ preferences to set preferences (Fig. \ref{fig:prefs}). Most values can remain as default except ``Region of Interest (ROI) size (length, breadth in cm)'' and ``Shape of ROI (0=square, 1=circle)'', which should be specified as per the video. Setting ``Split occlusions=1'' allows occlusions to be resolved but should only be used if the target shapes can be approximated as ellipses (e.g. fish, bugs)
-\item If you obtain consistent targets and most of your targets are seen marked in the ``mark'' view-type, then press save and move to Tracking.
-\end{enumerate}
-
-
-\section{Tracking}
-Peregrine allows two types of tracking: position and shape. Position tracking outputs the target position and velocity for multiple targets and shape tracking outputs shape information in the form of coefficients of a parabola fit on the target midline. 
-\subsection{Position and velocity tracking}
-Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. To start tracking, first check that all preferences are set properly including \textcolor{blue}{ROI size and shape} and most targets are marked in most of the frames. Ensuring this will reduce the time spent in repairing the tracks. 
-
-Now bring the slider to zero position and view-type to track. If you want to run the tracker without recording to see how the tracker performs press start. If everything looks okay, then stop, bring the slider back again and check the checkbox next to the track view to record the tracks. Now press start again. To speed up the tracker, you can toggle the ``live'' button. \textbf{Make sure to press save once the tracking is done}.
-\subsection{Shape tracking}
-The shape tracking follows the approach described in \cite{Bartolini2014}. Briefly, the measurements consist of a centroid, orientation, and two shape parameters that represent a parabola in the body frame. The parabola and corresponding orientation is found by brute-force search. The final measurements are fed into a particle filter with 200 particles. 
-In the case of Shape tracking the csv file is ordered as:
 \begin{table}[t]
-\caption{csv file output for  tracking}
+\caption{Column identifiers in the csv file output}
 \begin{center}
 %\rowcolors{1}{}{lightgray}
 %\resizebox{\textwidth}{!}{%
@@ -122,17 +85,148 @@ column no. &  variable \\
 \label{tab:csvcolumns}
 \end{table}
 
+Peregrine is an automated tracking system developed to analyse and study animal behaviour. Versions of this tracking system have been used/developed as part of \cite{Butail2011,Butail2012b,Butail2012c, Butail2013c, Ladu2014, Bartolini2015}. Please refer to those for technical details. This document describes basic steps to get started and use peregrine. The following videos located in the current folder can be used for a quick start:
+\begin{itemize}
+\item \href{run:initial\_setup.mov}{initial\_setup.mov}
+\item \href{run:camera\_calibration.mov}{camera\_calibration.mov}
+\end{itemize}
 
-\subsection{Repair mode}
-The repair mode allows the user to fix the tracks by
+\section{Initial setup}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.295\linewidth]{prefs}
+\caption{Preferences}
+\label{fig:prefs}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.995\linewidth]{thresholds}
+\caption{Setting thresholds to achieve the best possible tracking performance. (a) raw video; (b) with background checked and thresholds set; and (c) after selecting ``mark'' in the view type. Note the circular region of interest (ROI) as a blue dotted line. Video data from \cite{Miller2012}.}
+\label{fig:thresholds}
+\end{figure}
+Peregrine is developed in MATLAB and shared using a dropbox folder. For best results the input to peregrine should be in the form of frames with sequential filenames. The length of each filename should be the same, for example, exp01\_001.bmp, exp01\_002.bmp, exp01\_003.bmp, and so on. \textcolor{red}{If recording with multiple cameras make sure to append the filename with the camera identifier, for example, exp01\_cam01\_001.bmp, exp01\_cam01\_002.bmp, and so on.} (Also, see video \href{run:initial\_setup.mov}{initial\_setup.mov})
 \begin{enumerate}
-\item Stitch broken tracks
-\item Switch tracks before and after an occlusion that was not resolved properly
-\item Add a new point for an undetected target
+\item Ensure all video frames are in a single folder.
+\item Change MATLAB current folder to where peregrine is located.
+\item Type \emph{peregrine} on the command window and select File $\rightarrow$ open. Select any frame from the list of frames.
+\item Press start to check if the video is playing properly.
+\item Check the Background checkbox. Now, using the sliders ``Target contrast'' and ``Target intensity'' try to have the foreground only visible as white blobs on the screen. \textcolor{blue}{Set ``Target contrast'' to 0 if the targets are moving very slowly or remain still in some frames.}
+\item Use the crop tool next to the background to Crop a region of interest; you may also remove unwanted areas within the region of interest using the button next to it (not recommended as this will also make the targets invisible if they enter such region, however recommended if there is a persistent noise source in that area).
+\item Select the ``Mark'' radio button in the View type to see if all targets are selected (Fig. \ref{fig:thresholds}). Verify the count status on the right of the ``Live'' button.
+\item Select Edit $\rightarrow$ preferences to set preferences (Fig. \ref{fig:prefs}). Most values can remain as default except ``Region of Interest (ROI) size (length, breadth in cm)'' and ``Shape of ROI (0=square, 1=circle)'', which should be specified as per the video. Setting ``Split occlusions=1'' allows occlusions to be resolved but should only be used if the target shapes can be approximated as ellipses (e.g. fish, bugs)
+\item If you obtain consistent targets and most of your targets are seen marked in the ``mark'' view-type, then press save and move to Tracking.
 \end{enumerate}
+
+
+\section{Tracking}
+Peregrine allows two types of tracking: position and shape. Position tracking outputs the target position and velocity for multiple targets and shape tracking outputs shape information in the form of coefficients of a parabola fit on the target midline. 
+\subsection{Position and velocity tracking}
+Position and velocity tracking uses a Kalman filter \cite{BarShalom1987}, and global data-association \cite{Kuhn1955} to track multiple targets in a video. To start tracking (also, see video \href{run:initial\_setup.mov}{initial\_setup.mov}):
+\begin{enumerate}
+\item Check that all preferences are set properly including \textcolor{blue}{ROI size and shape} and most targets are marked in most of the frames. Ensuring this will reduce the time spent in repairing the tracks. 
+\item Now bring the slider to zero position and view-type to track. If you want to run the tracker without recording to see how the tracker performs press start. If everything looks okay, then stop, bring the slider back again and check the checkbox next to the track view to record the tracks. 
+\item Now press start again. To speed up the tracker, you can toggle the ``live'' button. \textbf{Make sure to press save once the tracking is done}.
+\item \textcolor{red}{If three-dimensional reconstruction is to be obtained, then it is critical that both tracks start and end at the same time}
+\end{enumerate}
+
+\subsection{Shape tracking}
+The shape tracking follows the approach described in \cite{Bartolini2015}. Briefly, the measurements consist of a centroid, orientation, and two shape parameters that represent a parabola in the body frame. The parabola and corresponding orientation is found by brute-force search. The final measurements are fed into a particle filter with 200 particles. 
+In the case of Shape tracking the csv file will have four extra parameters corresponding to shape in the output file. 
+
+
+\subsection{Three-dimensional tracking}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.995\linewidth]{threed_new}
+\caption{Three-dimensional reconstruction.}
+\label{fig:threed_new}
+\end{figure}
+Trajectory data can be used from two different camera views to reconstruct full three-dimensional position of targets (Fig. \ref{fig:threed_new}). In order to reconstruct 3D data, the cameras must be calibrated.  This section explains camera calibration steps and the procedure to obtain three-dimensional data.
+\subsubsection{Camera calibration}
+Each camera has intrinsic parameters (focal length, location of centroid, distortion coefficients) and extrinsic parameters (orientation, position) that must be determined to estimate the position of an object within the camera frame.
+
+Calibration involves recording videos of a checkerboard after the cameras have been set as per the experimental setup. It is important that the setup stays the same throughout the full experimental study. This includes camera position, orientation, video resolution, frame rate, and lighting. \textcolor{blue}{Any change in the experimental setup will require recalibrating the cameras.}
+
+For calibration we will use the MATLAB calibration toolbox \cite{BouguetCalibrationToolbox}. The input to this toolbox are a set of images with checkerboard in varying position/orientations; the output (after passing through a custom-made script) is a calibration file that stores camera properties in the form of calibration matrices\footnote{Intrinsic calibration usually needs to be done less frequently than extrinsic calibration. We do intrinsic calibration for underwater experiments in air based on the assumption that the refraction due to the does not cause large errors for small tracking volumes. Do intrinsic calibration again if there is marked change in the environment such as temperature and humidity}. (The toolbox is available in the \emph{TOOLBOX\_calib} folder within peregrine). Use the toolbox to perform calibration as described in the documentation for each camera \url{http://www.vision.caltech.edu/bouguetj/calib_doc/index.html}.
+
+\paragraph{For intrinsic calibration for each camera:}
+\begin{enumerate}
+\item Connect the camera and start recording video
+\item Move the checkerboard \textcolor{blue}{slowly} in air at different positions, orientations in the camera field of view.
+\item Start-stop record (small video). Export frames into a single folder with the camera name. Typically there should be at least 30 frames with high variability in the positions for each camera.
+\item Follow the calibration steps as described in the MATLAB calibration toolbox \cite{BouguetCalibrationToolbox}.
+\end{enumerate}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.995\linewidth]{calib2}
+\caption{Calibration}
+\label{fig:calib}
+\end{figure}
+\paragraph{For extrinsic calibration:}
+\begin{enumerate}
+\item Mark the calibration board to help you outline the same section of the checkerboard in multiple cameras (see arrow in fourth vertical column the figure \ref{fig:calib}. I used it to select the same section in each frame)
+\item Put the checkerboard in tank and visible in at least two cameras. 
+\item Do a quick start and stop recording.
+\item Repeat steps 2 and 3 between combinations of two cameras until you cover all cameras. e.g. if you have three cameras one possible combination would be camera 1 and camera 2, then camera  2 and camera 3. If you have two cameras just do camera 1 and camera 2.
+\item Put combination of frames representing the same time instant from each camera in a separate folder.
+\end{enumerate}
+
+Run the script \emph{get\_camera\_calib}. (Also, see  \href{run:camera\_calibration.mov}{camera\_calibration.mov}) \textcolor{red}{To ensure that the orientation is also correct, follow the same order of corners in each view (note how the frame orients the same way in all views in Fig. \ref{fig:calib}.} The script will dump a calibration file (camera\_calibration.mat) in the location where extrinsic images are stored. 
+
+\subsubsection{Three-dimensional reconstruction}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=.995\linewidth]{roi3d_recon}
+\caption{Region selection (outer=red and inner=black surface of ROI) during 3D reconstruction.}
+\label{fig:threed_new}
+\end{figure}
+The current version only supports single target reconstruction for target id 1. 
+
+Select File $\rightarrow$ Reconstruct (3D). Note that camera 1 should be the same as in the calibration. The script assumes that camera calibration, and tracking on individual views has been performed. Each view has a separate folder containing the frames, X00 data file, and the configuration file. To further optimize the calibration, the user is asked to draw rectangles corresponding to the outer and inner surface of the region of interest. 
 
 \subsection{Command line mode}
 \emph{pg\_cmd}
+
+
+\section{Repair mode}
+The repair mode allows the user to fix the tracks by
+\begin{enumerate}
+\item Stitching broken tracks
+\item Switching tracks before and after an occlusion that was not resolved properly
+\item Adding a new point for an undetected target
+\end{enumerate}
+See also section \ref{sec:keyboardshortcuts}. 
+
+\section{Keyboard shortcuts} 
+\label{sec:keyboardshortcuts}
+
+Keyboard shortcuts allow faster use (navigation and repair) once you have used peregrine for a few videos. 
+\begin{table}[h]
+\caption{Keyboard shortcuts (the window should be active)}
+\begin{center}
+%\rowcolors{1}{}{lightgray}
+%\resizebox{\textwidth}{!}{%
+\begin{tabular}[t]{cl}
+\hline
+Action &  Shortcut key\\
+\hline
+\textbf{Navigation} & -- \\
+ Start/Stop & spacebar \\
+ Next/Previous frame & left arrow / right arrow \\
+ Save & ctrl+s \\
+\textbf{Repair mode} & -- \\
+Select target&  t \\
+Switch/update target & s \\
+Add a point &  a \\
+Delete next few frames &  d\\
+\end{tabular}
+%}
+\end{center}
+\label{tab:keyboardshortcuts}
+\end{table}
+
 \section{Global observations}
 
 Once trajectory data is available, the command \emph{get\_obs} computes the  various measures of collective behavior. We assume that both position and velocity of each target (for example fish) is available at all times during the experiment. We also assume that the each fish identified by a unique number that can be used to quantify the behavior during the trial. Unless specified, we make the assumption that the heading is the same as the direction of motion. (This assumption is dropped, for example, when the fish are in a water tunnel.)

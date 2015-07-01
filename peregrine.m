@@ -22,7 +22,7 @@ function varargout = peregrine(varargin)
 
 % Edit the above text to modify the response to help peregrine
 
-% Last Modified by GUIDE v2.5 13-Jan-2014 17:00:28
+% Last Modified by GUIDE v2.5 17-Jun-2015 23:44:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -421,7 +421,7 @@ view_type=1;
 
 [filename, pathname, filterindex]=uigetfile(...
             {'*.bmp; *.tif; *.png; *.jpg; *.jpeg;', 'Image files'; ...
-             '*.avi; *.mov;', 'Video files'}, 'Choose an image file or video');
+             '*.avi; *.mov; *.m4v; *.mp4;', 'Video files'}, 'Choose an image file or video');
 if filename
 
     handles.offline=filterindex;
@@ -758,7 +758,9 @@ while ss
     end
     axes(handles.axes1);
     
-    [handles.bg handles.nZ handles.X handles.P handles.datfile handles.cm2pix handles.sz1 mesg handles.frame]=onestep(handles.sides_cm, img_t, bin_t, area_t, ...
+    [handles.bg handles.nZ handles.X handles.P handles.datfile handles.cm2pix ...
+                    handles.sz1 mesg handles.frame]=...
+                    onestep(handles.sides_cm, img_t, bin_t, area_t, ...
                     handles.fgislight, handles.circ, handles.smooth, handles.bg, handles.alpha,...
                     handles.blur, handles.bb_blur, handles.bb_size, handles.X, handles.P, handles.fps, ...
                     handles.datfile, handles.getfrm, get(handles.bgyes, 'value'), handles.trktype, ...
@@ -1028,7 +1030,7 @@ view_type=1;
 
 [filename, pathname, filterindex]=uigetfile(...
             {'*.bmp; *.tif; *.png; *.jpg; *.jpeg;', 'Image files'; ...
-             '*.avi; *.mov;', 'Video files'}, 'Choose an image file or video');
+             '*.avi; *.mov; *.mp4; *.m4v;', 'Video files'}, 'Choose an image file or video');
 if filename
 
     handles.offline=filterindex;
@@ -1056,7 +1058,7 @@ prompt={'Foreground is darker (0=no, 1=yes):';... % 1
         'Number of targets (approx.):'; ... %3
         'Blurring big blobs (width, height, sigma, extension):'; ... % 4
         'Blurring blob size (pixels):'; ... % 5
-        'Tracker type (0=kf+gnn, 1=kf+gnn+nn, 2=pf+gnn) :'; ... % 6 
+        'Tracker type (0=zebrafish, 1=slow bugs, 2=danios) :'; ... % 6 
         'Record frames'; ... % 7 during verification
         'Region of Interest (ROI) size (length, breadth in cm)'; ... % 8
         'Shape of ROI (0=square, 1=circle):'; ... % 9 
@@ -1374,13 +1376,13 @@ elseif view_type==4
         end
 
 
-        if handles.trktype==0 || handles.trktype==1
+        if ~handles.shape
             % note that the data association for this case is nearest-neighbor
             % since there is only one target and one measurement (marked by the
             % user)
-            X=mttkf2d(X, [],  Zk1, 1/handles.fps, calib, 3);
-        elseif handles.trktype==2
-            X=mttpf2d(X, [],  Zk1, 1/handles.fps, calib);
+            X=mttkf2d(X, [],  Zk1, 1/handles.fps, calib, handles.trktype, 1);
+        else
+            X=mttkf2ds(X, [],  Zk1, 1/handles.fps, calib, handles.trktype, 1);
         end
 
         curr=X(:,1)==k; % find current time-step
@@ -1491,35 +1493,12 @@ function help_doc_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+open('./doc/details.pdf');
 
-set_instr('[?] Watch peregrine_help.m4v', handles);
+% set_instr('[?] Watch peregrine_help.m4v', handles);
 % fprintf('[?] Check your preferences\n');
 % fprintf('[?] Did you press save after setting up the thresholds\n');
 % fprintf('[?] Did you record the tracks and save?\n');
-
-% --------------------------------------------------------------------
-function keypress_short_Callback(hObject, eventdata, handles)
-% hObject    handle to keypress_short (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-aboutstr=[];
-
-aboutstr=[aboutstr sprintf('Keyboard shortcuts (the window should be active)... \n')];
-aboutstr=[aboutstr sprintf('(Navigation)\n')];
-aboutstr=[aboutstr sprintf('Start/Stop [space]\n')];
-aboutstr=[aboutstr sprintf('Next/Previous frame [left arrow / right arrow]\n')];
-aboutstr=[aboutstr sprintf('\n(Repair mode)\n')];
-aboutstr=[aboutstr sprintf('Select target [t]\n')];
-aboutstr=[aboutstr sprintf('Switch/update target [s]\n')];
-aboutstr=[aboutstr sprintf('Add a point [a]\n')];
-aboutstr=[aboutstr sprintf('Delete next few frames [d]\n')];
-aboutstr=[aboutstr sprintf('\n(General)\n')];
-aboutstr=[aboutstr sprintf('Save [ctrl+s]\n')];
-
-
-msgbox(aboutstr, 'Keyboard shortcuts');
-
 
 % --------------------------------------------------------------------
 function measure_t_Callback(hObject, eventdata, handles)
@@ -1563,3 +1542,20 @@ function repair_posonly_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of repair_posonly
+
+
+% --------------------------------------------------------------------
+function camera_calib_Callback(hObject, eventdata, handles)
+% hObject    handle to camera_calib (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+get_camera_calib;
+
+% --------------------------------------------------------------------
+function recon3d_Callback(hObject, eventdata, handles)
+% hObject    handle to recon3d (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+recon3d;
