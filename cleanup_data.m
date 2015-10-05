@@ -5,7 +5,7 @@ fprintf('keep a backup copy of the file!!\n');
 
 csvdata=csvread(csvfile);
 
-numFrames=max(csvdata(:,1));
+
 
 % %%% shave off last five minutes
 % ff=csvdata(csvdata(:,2)==1 & csvdata(:,1)>0,1);
@@ -14,10 +14,14 @@ numFrames=max(csvdata(:,1));
 % 
 % csvdata=csvdata(csvdata(:,1)>=ff & csvdata(:,1)<=ff+nfr,:);
 
-% remove zero ids
+% remove extra rows
+csvdata=csvdata(csvdata(:,2)~=0,:);
+numFrames=max(csvdata(:,1))-min(csvdata(:,1));
+
+
+% get all the target ids
 ids=unique(csvdata(:,2));
 ids2=[];
-ids=ids(ids~=0);
 
 % remove tracks that are less than 1% of the number of frames
 fprintf('removing tracks less than %d frames long..\n', ...
@@ -67,10 +71,13 @@ end
 
 if ~isempty(ids)
     csvdata=csvdata(ismember(csvdata(:,2), ids),:);
-    [~, idx]=sort(csvdata(:,1));
-    csvdata=csvdata(idx,:);
+    % sort according to ids
+%     [~, idx]=sort(csvdata(:,1));
+%     csvdata=csvdata(idx,:);
     if ~isempty(csvdata)
         csvwrite(csvfile, csvdata);
+        fprintf('%% manual repair done: %.3f\n', ...
+                sum(csvdata(:,9)==1)/size(csvdata,1)*100);
     else
         delete(csvfile);
     end

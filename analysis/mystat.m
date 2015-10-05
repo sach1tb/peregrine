@@ -1,4 +1,4 @@
-function mystat(stype, X, xlabels, ylbl, ptype)
+function mystat(stype, X, xlabels, ylbl, ptype, ctype)
 % function mystat(stype, X, xlabels, ylbl, ptype)
 %
 % stype is the statistical test: can be anova1way or a1, kw, anovan
@@ -9,20 +9,24 @@ function mystat(stype, X, xlabels, ylbl, ptype)
 % 'B'];
 % xlabels is the conditions structure e.g. {'0.00%', '0.25%'}
 % ylbl is the ylabel
-% ptype is the posthoc type for display. Use 2 for bars and 1 for letters
+% ptype is the plot type for display. Use 2 for bars and 1 for letters
+% ctype is the critical value type for post-hoc, 'hsd', or 'lsd'
 
 if nargin < 5
     ptype=1;
+    ctype='hsd';
+elseif nargin < 6
+    ctype='hsd';
 end
 fs=16; % fontsize
 
 switch stype
     case {'anova1way','a1'}
-        [p b st]=anova1(X, '', 'off');
+        [p, b, st]=anova1(X, '', 'off');
     case 'kw'
-        [p b st]=kruskalwallis(X, '', 'off');
+        [p, b, st]=kruskalwallis(X, '', 'off');
     case 'anova_rm'
-        [p b]=anova_rm(X, ''); p=p(1);
+        [p, b]=anova_rm(X, ''); p=p(1);
     case 'pair-with'     
     case 'anovan'  
         cc=grp2idx(xlabels);
@@ -37,7 +41,7 @@ switch stype
 %         XX(XX==0)=nan;
         X=XX;
         xlabels=unique(xlabels);
-        [p b st]=anova1(X, '', 'off');
+        [p, b, st]=anova1(X, '', 'off');
 end
 
 % if it is a percentage then show after multiplying by 100.
@@ -48,9 +52,9 @@ end
 
 switch ptype
     case 1
-        ff=boxplot(X);
+        boxplot(X);
     case 2
-        ff=bar(nanmean(X,1), 'facecolor', ones(1,3)*.5);
+        bar(nanmean(X,1), 'facecolor', ones(1,3)*.5);
         hold on;
         errorbar(1:size(X,2), nanmean(X,1), nanstd(X,[],1)./sqrt(sum(~isnan(X),1)), 'k.');
 end
@@ -86,8 +90,8 @@ title(sprintf('p=%.4f; F(%d,%d)=%.2f', p, b{2,3}, b{3,3}, b{2,5}));
 % end
 
 signi=[];kk=1;
-if p <= 0.25 & ~strcmp(stype,'anova_rm')
-    ph=post_hoc(st);
+if p <= 0.25 && ~strcmp(stype,'anova_rm')
+    ph=post_hoc(st, ctype);
     for ii=1:size(ph,1)
         for jj=1:size(ph,2)
             if ph(ii,jj)
@@ -104,9 +108,9 @@ end
 
 
 
-function ph=post_hoc(st)
+function ph=post_hoc(st, ctype)
 
-c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', 'hsd');
+c=multcompare(st, 'alpha', .05, 'display', 'off', 'ctype', ctype);
 
 % update cselect
 conditions=size(st.gnames,1);

@@ -923,13 +923,13 @@ val_t=ceil(max(roi_crop(3:4))/10);
 set(handles.instr, 'string', '[I] Click on the target. (Esc. to Cancel)');
 
 % click on second track (the one you want to switch with the current id)
-[x y button]=ginput(1);
+[x, y, button]=ginput(1);
 if button==1
     Xk=handles.datfile(handles.datfile(:,1)==k,:);
     pos=Xk(:,3:4);
-    [xp yp]=handles.cm2pix(pos(:,1), pos(:,2));
+    [xp, yp]=handles.cm2pix(pos(:,1), pos(:,2));
     dist=sum(([x; y]*ones(1,numel(xp))-[xp'; yp']).^2);
-    [val idx1]=min(dist);
+    [val, idx1]=min(dist);
     if ~isempty(val) && val<=val_t
         idx=Xk(idx1, 2);
 
@@ -947,13 +947,9 @@ if button==1
         end
         rp_handle=plot(xp(idx1), yp(idx1), 'k+');
 
-        %%%%%%%%% update information for switching etc.
-%         handles.datfile(handles.datfile(:,2)==rp_id, 20)=1;
-
-
-        %%%% interpolate
+        % interpolate
         id1=find(handles.datfile(:,2)==rp_id & handles.datfile(:,1)<k & handles.datfile(:,3)~=0);
-        [val idx]=max(handles.datfile(id1,1));
+        [~, idx]=max(handles.datfile(id1,1));
         id1=id1(idx);
         id2=find(handles.datfile(:,2)==rp_id & handles.datfile(:,1)==k);
         if numel(id2)>1, id2=id2(1);end
@@ -961,7 +957,7 @@ if button==1
         k1=handles.datfile(id1,1); % last non-zero k
         k2=handles.datfile(id2,1); % current k
 
-        %%%%%%%% interpolate between the two
+        % interpolate between the two
         nfld=size(handles.datfile,2);
         curr=zeros(numel(k1:k2), nfld);
         for jj=1:nfld
@@ -976,7 +972,10 @@ if button==1
         nzi=find(handles.datfile(:,1)~=0); % find non zero entries
         nzi=nzi(end);
         handles.datfile(nzi+1:nzi+size(curr,1),:)=curr;
-
+        
+        % update track row to record manual repair
+        % note only one entry per click is marked
+        handles.datfile(nzi+1, end)=-1;
 
         if ~ss
             set_instr(sprintf('[I] Monitor the target fish'), handles);
@@ -1002,12 +1001,12 @@ function select_rp_id_Callback(hObject, eventdata, handles)
 global rp_id
 global k
 
-[x y]=ginput(1);
+[x, y]=ginput(1);
 Xk=handles.datfile(handles.datfile(:,1)==k,:);
 pos=Xk(:,3:4);
-[xp yp]=handles.cm2pix(pos(:,1), pos(:,2));
+[xp, yp]=handles.cm2pix(pos(:,1), pos(:,2));
 dist=sum(([x; y]*ones(1,numel(xp))-[xp'; yp']).^2);
-[val idx]=min(dist);
+[val, idx]=min(dist);
 
 %         if val < 10
 rp_id=Xk(idx, 2);
@@ -1224,7 +1223,7 @@ if view_type==2 && get(handles.repair_posonly, 'value')
     set(handles.instr, 'string', '[I] Click on the target. (Esc. to cancel)');
 
     % click on second track (the one you want to switch with the current id)
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1   
         % if there is no marked positions then copy all from the current
         % set of measurements
@@ -1236,7 +1235,7 @@ if view_type==2 && get(handles.repair_posonly, 'value')
         yp=handles.frame(k).Mk(2,:);
         
         dist=sum(([x; y]*ones(1,numel(xp))-[xp; yp]).^2);
-        [val idx]=min(dist);
+        [val, idx]=min(dist);
         plot(xp(idx), yp(idx), 'ro', 'markersize', 10);
         
         handles.frame(k).Mk(:,idx)=[];
@@ -1257,13 +1256,13 @@ elseif view_type==4
 
     val_t=ceil(max(roi_crop(3:4))/10);
 
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1
         Xk=handles.datfile(handles.datfile(:,1)==k,:);
         pos=Xk(:,3:4);
-        [xp yp]=handles.cm2pix(pos(:,1), pos(:,2));
+        [xp, yp]=handles.cm2pix(pos(:,1), pos(:,2));
         dist=sum(([x; y]*ones(1,numel(xp))-[xp'; yp']).^2);
-        [val idx]=min(dist);
+        [val, idx]=min(dist);
         if ~isempty(val) && val<=val_t
 
             del_id=Xk(idx, 2);
@@ -1325,7 +1324,7 @@ if view_type==2 && get(handles.repair_posonly, 'value')
     set(handles.instr, 'string', '[I] Click on the target. (Esc. to cancel)');
 
     % click on second track (the one you want to switch with the current id)
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1        
         plot(x,y, 'k+');
         % if there is no marked positions then copy all from the current
@@ -1351,7 +1350,7 @@ elseif view_type==4
     set(handles.instr, 'string', '[I] Click on the target. (Esc. to cancel)');
 
     % click on second track (the one you want to switch with the current id)
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1
         if exist('rp_handle', 'var')
             if ishandle(rp_handle)
@@ -1361,7 +1360,7 @@ elseif view_type==4
         rp_handle=plot(x, y, 'k+');
 
         id1=find(handles.datfile(:,2)==rp_id & handles.datfile(:,1)<=k);
-        [val idx]=max(handles.datfile(id1,1));
+        [~, idx]=max(handles.datfile(id1,1));
         id1=id1(idx);
         X=handles.datfile(id1,:);
 
@@ -1389,6 +1388,10 @@ elseif view_type==4
         nzi=find(handles.datfile(:,1)~=0); % find non zero entries
         nzi=nzi(end);
         handles.datfile(nzi+1:nzi+sum(curr),1:size(X,2))=X(curr,:);
+        
+        % update track row to record manual repair
+        % note only one entry per click is marked
+        handles.datfile(nzi+1, end)=-1;
 
         if ~ss
             set_instr(sprintf('[I] Monitor the target fish'), handles);
@@ -1416,13 +1419,13 @@ if view_type==2
     set(handles.instr, 'string', '[I] Click on the target. (Esc. to cancel)');
 
     % click on second track (the one you want to switch with the current id)
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1   
         yp=handles.frame(k).Zk(1,:);
         xp=handles.frame(k).Zk(2,:);
         
         dist=sum(([x; y]*ones(1,numel(xp))-[xp'; yp']).^2);
-        [val idx]=min(dist);
+        [val, idx]=min(dist);
         plot(xp(idx), yp(idx), 'ro', 'markersize', 10);
         
         handles.frame(k).Zk(:,idx)=[];
@@ -1435,13 +1438,13 @@ elseif view_type==4
     set_instr(instr1, handles);
 
 
-    [x y button]=ginput(1);
+    [x, y, button]=ginput(1);
     if button==1
         Xk=handles.datfile(handles.datfile(:,1)==k,:);
         pos=Xk(:,3:4);
-        [xp yp]=handles.cm2pix(pos(:,1), pos(:,2));
+        [xp, yp]=handles.cm2pix(pos(:,1), pos(:,2));
         dist=sum(([x; y]*ones(1,numel(xp))-[xp'; yp']).^2);
-        [val idx]=min(dist);
+        [val, idx]=min(dist);
 
         del_id=Xk(idx, 2);
         plot(xp(idx), yp(idx), 'ro', 'markersize', 10);
@@ -1513,7 +1516,7 @@ global roi_crop
 set_instr('[I] Click points (at least 3) along the length of the target. Backspace/delete to remove a point. Right click to end)', handles);
 
 % click on second track (the one you want to switch with the current id)
-[x y]=getpts;
+[x, y]=getpts;
 if numel(x) > 2
     calib=calib2d(roi_crop, handles.sides_cm);
     if rp_id

@@ -2,7 +2,7 @@ function recon3d
 
 if ispc
     fileDelimiter='\';
-elseif ismac | isunix
+elseif ismac || isunix
     fileDelimiter='/';
 end
 
@@ -166,13 +166,13 @@ for cc=1:numberOfCameras
     imshow(img{cc});
     hold on;
     if cc==1
-    title(sprintf('Camera %d. 3D projected track (blue). 2D track (red)', cc));
+    title(sprintf('Camera %d. 3D projected track (blue dashed). 2D track (red)', cc));
     else
         title(sprintf('Camera %d', cc));
     end
     
     plot(trajectoryPix{cc}(1,:), trajectoryPix{cc}(2,:), 'r');
-    plot(reconPix(1,:), reconPix(2,:), 'b');
+    plot(reconPix(1,:), reconPix(2,:), 'b--');
     
     plot(roiPix{cc}(:,1), roiPix{cc}(:,2), 'wo', 'markersize', 8, 'linewidth', 2);
     tpix=w2cam(tank, cams(cc));
