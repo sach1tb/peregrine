@@ -1,9 +1,9 @@
 function fg = setRoi(fg, roi_crop, roi_cut, circ)
 
-if circ % actually it's an ellipse
+if circ==2 % actually it's an ellipse
     center=[roi_crop(1)+roi_crop(3)/2; roi_crop(2)+roi_crop(4)/2];
     rad=roi_crop(3:4)/2;
-    [H W]=meshgrid(1:size(fg,2), 1:size(fg,1));
+    [H, W]=meshgrid(1:size(fg,2), 1:size(fg,1));
     H=H-center(1);
     W=W-center(2);
     rad_p=W.^2/rad(2)^2 + H.^2/rad(1)^2;

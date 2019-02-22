@@ -13,7 +13,7 @@ addpath('./TOOLBOX_calib');
 
 %% change these values (or user input)
 
-calibDate=input('Date when this calibration was done(mmmddyyyy):', 's');
+% calibDate=input('Date when this calibration was done(mmmddyyyy):', 's');
 numberOfCameras=input('Total number of cameras used (>1):');
 
 % location where intrinsic calibration .mat files are kept
@@ -53,17 +53,10 @@ end
 % cam_colors=colormap(lines(size(cameraIdList,1)));
 cam_colors=colormap(lines(numberOfCameras));
 
-
-
-
-if ispc, tmpdir='C:\Windows\Temp\'; else tmpdir='/tmp/'; end
-
-
-
 for ii=1:numberOfCameras
        
 %     matfile=strcat(intrinsicCameraCalibrationLocations(ii,:), 'Calib_Results.mat');
-    load([camera{ii}.pathname, '/', camera{ii}.filename], 'fc','cc','kc','alpha_c');
+    load([camera{ii}.pathname, filesep, camera{ii}.filename], 'fc','cc','kc','alpha_c');
 %     load(matfile, 'fc','cc','kc','alpha_c');
     
       
@@ -72,7 +65,7 @@ for ii=1:numberOfCameras
             {'*.bmp; *.tif; *.png; *.jpg; *.jpeg;', 'Image files'}, ...
             sprintf('Choose an extrinsic image file for camera %d', ii));
     cameraIdList(ii,:)=filename(1:end-8);
-    extrinsicImageLocation=[extrinsicImageLocation, '/'];
+    extrinsicImageLocation=[extrinsicImageLocation, filesep];
     
     flist=dir(strcat(extrinsicImageLocation, cameraIdList(ii,:),'*.*'));
     ni=size(flist,1);
@@ -80,9 +73,9 @@ for ii=1:numberOfCameras
     for im_ii=1:ni
         disp(strcat('processing ', flist(im_ii).name, '....'));
         I=double(imread(strcat(extrinsicImageLocation, flist(im_ii).name)));
-        if size(I,3)>1,
+        if size(I,3)>1
             I = I(:,:,2);
-        end;
+        end
         wintx = 5;
         winty = 5;
 

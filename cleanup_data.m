@@ -1,10 +1,10 @@
 function cleanup_data(csvfile)
 % function cleanup_data(csvfile)
 
-fprintf('keep a backup copy of the file!!\n');
+fprintf('Making a backup copy of the file...\n');
+copyfile(csvfile, [csvfile(1:end-4), '_', datestr(now, 'ddmmyyyy_HHMMSS'), '.csv']);
 
 csvdata=csvread(csvfile);
-
 
 
 % %%% shave off last five minutes
@@ -24,56 +24,74 @@ ids=unique(csvdata(:,2));
 ids2=[];
 
 % remove tracks that are less than 1% of the number of frames
-fprintf('removing tracks less than %d frames long..\n', ...
-            floor(numFrames*.01));
-numIds=numel(ids);
-for jj=ids'
-    if sum(csvdata(:,2)==jj,1) > floor(numFrames*.01)
-        ids2=[ids2, jj];
-    end
-end
-fprintf('tracks removed=%d\n', numIds-numel(ids2));
-ids=ids2;
-ids2=[];
-
-fprintf('removing tracks that do not move at all...\n')
+fprintf('Remove tracks that less than %d frames long..\n', ...
+            min(5, floor(numFrames*.01)));
 resp=input('confirm? []=no, other=yes:');
 if ~isempty(resp)
     numIds=numel(ids);
-    for jj=ids
-        velocity=csvdata(csvdata(:,2)==jj, 5:6);
-        speed=mean(sum(velocity.^2,1));
-        if speed>0.01 % cm/s
+    for jj=ids'
+        if sum(csvdata(:,2)==jj,1) > floor(numFrames*.01)
             ids2=[ids2, jj];
         end
     end
     fprintf('tracks removed=%d\n', numIds-numel(ids2));
-    ids=ids2;
+    ids=ids2';
     ids2=[];
 end
 
+fprintf('Remove tracks that do not move at all...\n')
+resp=input('confirm? []=no, other=yes:');
+if ~isempty(resp)
+    numIds=numel(ids);
+    for jj=ids'
+        pos=csvdata(csvdata(:,2)==jj, 3:4);
+        dist_moved=sum(sqrt((sum((diff(pos, 1)).^2,2))));
+        if dist_moved>1 % cm
+            ids2=[ids2, jj];
+        end
+    end
+    fprintf('tracks removed=%d\n', numIds-numel(ids2));
+    ids=ids2';
+    ids2=[];
+end
 
-fprintf('keeping tracks longer than %d frames ...\n', ...
+fprintf('Keep only tracks that are longer than %d frames ...\n', ...
             floor(numFrames*.75));
 resp=input('confirm? []=no, other=yes:');
 if ~isempty(resp)
     numIds=numel(ids);
-    for jj=ids
+    for jj=ids'
         if sum(csvdata(:,2)==jj,1) > floor(numFrames*.75)
             ids2=[ids2, jj];
         end
     end
     fprintf('tracks removed=%d\n', numIds-numel(ids2))
-    ids=ids2;
+    ids=ids2';
     ids2=[];
 end
 
+fprintf('Remove tracks which belong to targets that are too big or small...\n')
+resp=input('confirm? []=no, other=yes:');
+if ~isempty(resp)
+    numIds=numel(ids);
+    avg_size=mean(csvdata(:,7));
+    std_size=std(csvdata(:,7));
+    for jj=ids'
+        size_id=mean(csvdata(csvdata(:,2)==jj, 7));
+        if abs(size_id-avg_size)<3*std_size
+            ids2=[ids2, jj];
+        end
+    end
+    fprintf('tracks removed=%d\n', numIds-numel(ids2));
+    ids=ids2';
+    ids2=[];
+end
 
 if ~isempty(ids)
     csvdata=csvdata(ismember(csvdata(:,2), ids),:);
-    % sort according to ids
-%     [~, idx]=sort(csvdata(:,1));
-%     csvdata=csvdata(idx,:);
+    % sort according to time
+    [~, idx]=sort(csvdata(:,1));
+    csvdata=csvdata(idx,:);
     if ~isempty(csvdata)
         csvwrite(csvfile, csvdata);
         fprintf('%% manual repair done: %.3f\n', ...

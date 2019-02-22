@@ -1,11 +1,15 @@
-if ~exist('rosette_calibration','var'),
-    rosette_calibration = 0;
-end;
-
 % Rough estimates for principal point and focal length:
 fg = [1009.661057548567   1009.706970843858 ]';
 cg = [ 1031.688786545889   1288.395050759215]';
 kg = [-0.054285891395760  -0.026812583950935 0 0]';
+
+%fg = [ 139.77712   139.61650 ]';
+%cg = [ 319.62550   258.16616 ]';
+%kg = [ 0.02859   -0.01812   0.00839   -0.00182 ]';
+
+%fg = [700;700]; %[ 1397.7712   1396.1650 ]';
+%cg = [ 319.62550   258.16616 ]';
+%kg = [ -1   -0.01812   0.00839   -0.00182 ]';
 
 if exist(['wintx_' num2str(kk)]),
     eval(['wintxkk = wintx_' num2str(kk) ';']);
@@ -13,11 +17,6 @@ if exist(['wintx_' num2str(kk)]),
         eval(['wintx = wintx_' num2str(kk) ';']);
         eval(['winty = winty_' num2str(kk) ';']);
     end;
-end;
-
-if (rosette_calibration),
-    wintx = 20;
-    winty = 20;
 end;
 
 fprintf(1,'Using (wintx,winty)=(%d,%d) - Window size = %dx%d      (Note: To reset the window size, run script clearwin)\n',wintx,winty,2*wintx+1,2*winty+1);
@@ -74,37 +73,6 @@ while (~grid_success)
     x = x(ind);
     y = y(ind);
 
-    if (rosette_calibration && (kk < 17))
-        % Enforce the ordering convention for the Rosette calibration.
-        c_ima = [nx/2 + 0.5 ; ny/2 + 0.5];
-
-        vects = [x'-c_ima(1) ; y'-c_ima(2)];
-        r = sqrt(sum(vects.^2));
-
-        [r_junk,ind_sort_r] = sort(r);
-        ind_23 = ind_sort_r(1:2);
-        ind_14 = ind_sort_r(3:4);
-
-        if det(vects(:,ind_23))<0
-            ind2 = ind_23(1);
-            ind3 = ind_23(2);
-        else
-            ind2 = ind_23(2);
-            ind3 = ind_23(1);
-        end;
-        if det(vects(:,ind_14))<0
-            ind1 = ind_14(1);
-            ind4 = ind_14(2);
-        else
-            ind1 = ind_14(2);
-            ind4 = ind_14(1);
-        end;
-
-        ind_resort = [ind1;ind2;ind3;ind4];
-        x = x(ind_resort);
-        y = y(ind_resort);
-    end;
-
     x1= x(1); x2 = x(2); x3 = x(3); x4 = x(4);
     y1= y(1); y2 = y(2); y3 = y(3); y4 = y(4);
 
@@ -159,33 +127,24 @@ while (~grid_success)
         grid_success = 1;
     else
         % Try to automatically count the number of squares in the grid
-        if (rosette_calibration)
-            win_count = 10;
-        else
-            win_count = wintx;
-        end;
+        win_count = wintx;
         n_sq_x1 = count_squares_fisheye_distorted(I,x1,y1,x2,y2,win_count, fg, cg, kg);
         n_sq_x2 = count_squares_fisheye_distorted(I,x3,y3,x4,y4,win_count, fg, cg, kg);
         n_sq_y1 = count_squares_fisheye_distorted(I,x2,y2,x3,y3,win_count, fg, cg, kg);
         n_sq_y2 = count_squares_fisheye_distorted(I,x4,y4,x1,y1,win_count, fg, cg, kg);
-            
         %n_sq_x1 = count_squares(I,x1,y1,x2,y2,wintx);
         %n_sq_x2 = count_squares(I,x3,y3,x4,y4,wintx);
         %n_sq_y1 = count_squares(I,x2,y2,x3,y3,wintx);
         %n_sq_y2 = count_squares(I,x4,y4,x1,y1,wintx);
-        
+
         % If could not count the number of squares, enter manually
         if (n_sq_x1~=n_sq_x2)|(n_sq_y1~=n_sq_y2),
-            if ~rosette_calibration,
-                disp('Could not count the number of squares in the grid. Enter manually.');
-                n_sq_x = input(['Number of squares along the X direction ([]=' num2str(n_sq_x_default) ') = ']); %6
-                if isempty(n_sq_x), n_sq_x = n_sq_x_default; end;
-                n_sq_y = input(['Number of squares along the Y direction ([]=' num2str(n_sq_y_default) ') = ']); %6
-                if isempty(n_sq_y), n_sq_y = n_sq_y_default; end;
-                grid_success = 1;
-            else
-                grid_success = 0;
-            end;
+            disp('Could not count the number of squares in the grid. Enter manually.');
+            n_sq_x = input(['Number of squares along the X direction ([]=' num2str(n_sq_x_default) ') = ']); %6
+            if isempty(n_sq_x), n_sq_x = n_sq_x_default; end;
+            n_sq_y = input(['Number of squares along the Y direction ([]=' num2str(n_sq_y_default) ') = ']); %6
+            if isempty(n_sq_y), n_sq_y = n_sq_y_default; end;
+            grid_success = 1;
         else
             n_sq_x = n_sq_x1;
             n_sq_y = n_sq_y1;
@@ -247,6 +206,7 @@ L = n_sq_y*dY;
 Np = (n_sq_x+1)*(n_sq_y+1);
 disp('Corner extraction...');
 grid_pts = cornerfinder(XX,I,winty,wintx); %%% Finds the exact corners at every points!
+%grid_pts = XX; %%% Finds the exact corners at every points!
 
 grid_pts = grid_pts - 1; % subtract 1 to bring the origin to (0,0) instead of (1,1) in matlab (not necessary in C)
 

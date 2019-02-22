@@ -22,7 +22,12 @@ fs=16; % fontsize
 
 switch stype
     case {'anova1way','a1'}
-        [p, b, st]=anova1(X, '', 'off');
+        if isempty(xlabels)
+            [p, b, st]=anova1(X, '', 'off');
+        else
+            [p, b, st]=anova1(X, xlabels, 'off');
+            xlabels=unique(xlabels);
+        end
     case 'kw'
         [p, b, st]=kruskalwallis(X, '', 'off');
     case 'anova_rm'
@@ -46,8 +51,10 @@ end
 
 % if it is a percentage then show after multiplying by 100.
 % note that the stats should be on the actual numbers
-if strfind(ylbl, '(%)')
-    X=X*100;
+if ischar(ylbl)
+    if strfind(ylbl, '(%)')
+        X=X*100;
+    end
 end
 
 switch ptype

@@ -1,12 +1,13 @@
 function recon3d
 
+% os dependent
 if ispc
     fileDelimiter='\';
 elseif ismac || isunix
     fileDelimiter='/';
 end
 
-
+% get the camera calibration file 
 [filename, pathname, ~]=uigetfile(...
             {'*.mat'},...
             'Choose the calibration file (camera_calibration.mat)');
@@ -19,20 +20,12 @@ if numberOfCameras ~= 2
 end
 
 % some fixes for old files
-for c_ii=1:numberOfCameras
-    cams(c_ii).km=[cams(c_ii).fc(1), cams(c_ii).alpha_c*cams(c_ii).fc(1), cams(c_ii).cc(1);
-                 0, cams(c_ii).fc(2), cams(c_ii).cc(2);
-                 0, 0, 1];       
-end
+% for c_ii=1:numberOfCameras
+%     cams(c_ii).km=[cams(c_ii).fc(1), cams(c_ii).alpha_c*cams(c_ii).fc(1), cams(c_ii).cc(1);
+%                  0, cams(c_ii).fc(2), cams(c_ii).cc(2);
+%                  0, 0, 1];       
+% end
 
-% 
-% startfile=csvread([floc, 'start.csv']);
-% 
-% dt=str2double(id(1:8));
-% tm=str2double(id(10:end));
-% 
-% start=startfile(startfile(:,1)==dt & startfile(:,2)==tm,3);
-% start=flipud(start); % order them as CT CS
 
 for cc=1:numberOfCameras
     
@@ -60,14 +53,15 @@ for cc=1:numberOfCameras
     cleanup_data([datapath, fileDelimiter, datafile]);
     X00=csvread([datapath, fileDelimiter, datafile]);
     
-    % only works for id==1
+    % only works for id==1, i.e., files should be cleaned
     rv=X00(X00(:,2)==1,3:4)';
     for jj=1:2
         rv(jj,:)=sma(rv(jj,:), 5);
     end
 
-
-    
+    % show images. for each view, extract the corner points of roi, also
+    % extract the pixel positions of the trajectory back from cm using the
+    % 2d calibration routine
     imshow(img{cc});
     hold on;
     
@@ -91,12 +85,14 @@ for cc=1:numberOfCameras
     end
     roiPix{cc}=[x,y];
     
+    % get the trajectory back in pixels for each view
     [us, vs]=cm2pix1(rv(1,:), rv(2,:), calib);
     trajectoryPix{cc}=[us; vs];
 
     idx1{cc}=unique(X00(X00(:,2)==1,1));
 end
 
+% find the number of points that are common to both views.
 idx=intersect(idx1{1}, idx1{2});
 for cc=1:numberOfCameras
     trajectoryPix{cc}=trajectoryPix{cc}(:,idx);
@@ -105,25 +101,28 @@ end
 nfrm=min(size(trajectoryPix{1},2), size(trajectoryPix{2},2));
 
 
-%%% improve camera parameters
+%%% improve camera parameter
 roiCornerPix=[roiPix{1}'; roiPix{2}'];
 npts=size(roiCornerPix,2);
 
-
+% for each of the eight corner find an initial guess of 3D position
 for jj=1:8
     [roiCorners(:,jj), err1]=lsTriangulate([roiPix{1}(jj,:)', ...
         roiPix{2}(jj,:)'], cams);
 end
 
+% the full parameters are camera euler angles, position, and corners. note
+% that intrinsic properties are assumed fine
 ea=SpinCalc('DCMtoEA321', cams(2).cTw(1:3,1:3), 'tol', .0001);
 ea(ea>90 | ea<-90)=ea(ea>90 | ea<-90)-360;
+% 3 euler angles, 3d position, and 8 corner positions
 X0=[ea'; cams(2).cTw(1:3,4); roiCorners(:)];
 range=[10 10 10 50 50 50 100*ones(1,npts*3)]';
 Xmin=X0-range;
 Xmax=X0+range;
 options = optimset('Display','off');
 warning off
-[X fval]=fmincon(@(X) cost1(X,roiCornerPix,cams), X0, [],[],[],[],Xmin,Xmax,[], options); % @(X) con1(X)
+[X, fval]=fmincon(@(X) cost1(X,roiCornerPix,cams), X0, [],[],[],[],Xmin,Xmax,[], options); % @(X) con1(X)
 warning on;
 % X=X0; fval=1;
 fprintf('# of frames=%d, fval=%.1f\n',nfrm, fval);
@@ -254,7 +253,7 @@ cams(2).cTw(1:3,1:3)=SpinCalc('EA321toDCM', X(1:3,1)');
 cams(2).cTw(1:3,4)=X(4:6,1);
 
 
-
+% the corners
 r=reshape(X(7:end,1), [3, size(u,2)]);
 
 penalty=0;
@@ -264,6 +263,8 @@ for jj=1:size(r,2)
     trajectoryPix=w2cam(r(:,jj), cams(1));
     pix2=w2cam(r(:,jj), cams(2));
     
+    % penalty is the distance in pixels between actual measurement and
+    % projected value
     penalty=penalty+sum((u(1:2,jj)-trajectoryPix(1:2)).^2 + ...
             (u(3:4,jj)-pix2(1:2)).^2);
 end

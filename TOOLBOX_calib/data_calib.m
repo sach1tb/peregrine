@@ -22,7 +22,7 @@ s_tot = s_ras + s_bmp + s_tif + s_pgm + s_jpg + s_ppm + s_jpeg;
 
 if s_tot < 1,
    fprintf(1,'No image in this directory in either ras, bmp, tif, pgm, ppm or jpg format. Change directory and try again.\n');
-   break;
+   return;
 end;
 
 

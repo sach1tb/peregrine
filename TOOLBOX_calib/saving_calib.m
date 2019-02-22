@@ -180,41 +180,24 @@ else
     cont_save = 1;
 end;
 
-
 if cont_save,
-    
     save_name = 'Calib_Results';
-    
     if exist('calib_name'),
-        
         fprintf(1,['\nSaving calibration results under ' save_name '.mat\n']);
-        
         string_save = ['save ' save_name ' center_optim param_list active_images ind_active est_alpha est_dist est_aspect_ratio est_fc fc kc cc alpha_c fc_error kc_error cc_error alpha_c_error  err_std ex x y solution solution_init wintx winty n_ima type_numbering N_slots small_calib_image first_num image_numbers format_image calib_name Hcal Wcal nx ny map dX_default dY_default KK inv_KK dX dY wintx_default winty_default no_image check_cond MaxIter'];
-        
         for kk = 1:n_ima,
             string_save = [string_save ' X_' num2str(kk) ' x_' num2str(kk) ' y_' num2str(kk) ' ex_' num2str(kk) ' omc_' num2str(kk) ' Rc_' num2str(kk) ' Tc_' num2str(kk) ' omc_error_' num2str(kk) ' Tc_error_' num2str(kk) ' H_' num2str(kk) ' n_sq_x_' num2str(kk) ' n_sq_y_' num2str(kk) ' wintx_' num2str(kk) ' winty_' num2str(kk) ' dX_' num2str(kk) ' dY_' num2str(kk)];
         end;
-        
     else
-        
         fprintf(1,['\nSaving calibration results under ' save_name '.mat (no image version)\n']);
-        
         string_save = ['save ' save_name ' center_optim param_list active_images ind_active est_alpha est_dist est_aspect_ratio est_fc fc kc cc alpha_c fc_error kc_error cc_error alpha_c_error err_std ex x y solution solution_init wintx winty n_ima nx ny dX_default dY_default KK inv_KK dX dY wintx_default winty_default no_image check_cond MaxIter'];
-        
         for kk = 1:n_ima,
             string_save = [string_save ' X_' num2str(kk) ' x_' num2str(kk) ' y_' num2str(kk) ' ex_' num2str(kk) ' omc_' num2str(kk) ' Rc_' num2str(kk) ' Tc_' num2str(kk) ' omc_error_' num2str(kk) ' Tc_error_' num2str(kk) ' H_' num2str(kk) ' n_sq_x_' num2str(kk) ' n_sq_y_' num2str(kk) ' wintx_' num2str(kk) ' winty_' num2str(kk) ' dX_' num2str(kk) ' dY_' num2str(kk)];
         end;
-        
     end;
     
-    
-    
     %fprintf(1,'To load later click on Load\n');
-    
     eval(string_save);
-    
     saving_calib_ascii;
-    
     fprintf(1,'done\n');
-    
 end;

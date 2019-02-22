@@ -221,9 +221,9 @@ end;
 
 % Pixel coordinates:
 if length(f)>1,
-    xp = xd3 .* (f * ones(1,n))  +  c*ones(1,n);
+    xp = xd3 .* (f(:) * ones(1,n))  +  c(:)*ones(1,n);
     if nargout > 1,
-        coeff = reshape(f*ones(1,n),2*n,1);
+        coeff = reshape(f(:)*ones(1,n),2*n,1);
         dxpdom = (coeff*ones(1,3)) .* dxd3dom;
         dxpdT = (coeff*ones(1,3)) .* dxd3dT;
         dxpdk = (coeff*ones(1,5)) .* dxd3dk;

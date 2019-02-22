@@ -241,15 +241,13 @@ if exist('kc'),
     end;
 end;
 
-
-
 if ~exist('alpha_c'),
     fprintf(1,'Initialization of the image skew to zero.\n');
     alpha_c = 0;
     alpha_smooth = 0.1; % slow convergence
 end;
 
-if ~exist('fc')& quick_init,
+if ~exist('fc') && quick_init,
     FOV_angle = 35; % Initial camera field of view in degrees
     fprintf(1,['Initialization of the focal length to a FOV of ' num2str(FOV_angle) ' degrees.\n']);
     fc = (nx/2)/tan(pi*FOV_angle/360) * ones(2,1);
@@ -321,7 +319,7 @@ fprintf(1,'Gradient descent iterations: ');
 param_list = param;
 
 
-while (change > 1e-9)&(iter < MaxIter),
+while (change > 1e-9) && (iter < MaxIter),
     
     fprintf(1,'%d...',iter+1);
     
@@ -583,7 +581,7 @@ param_error(ind_Jac) =  3*sqrt(full(diag(JJ2_inv)))*sigma_x;
 
 solution_error = param_error;
 
-if ~est_aspect_ratio & isequal(est_fc,[1;1]),
+if ~est_aspect_ratio && isequal(est_fc,[1;1]),
     solution_error(2) = solution_error(1);
 end;
 
@@ -596,10 +594,10 @@ fprintf(1,'done\n');
 
 
 fprintf(1,'\n\nCalibration results after optimization (with uncertainties):\n\n');
-fprintf(1,'Focal Length:          fc = [ %3.5f   %3.5f ] ± [ %3.5f   %3.5f ]\n',[fc;fc_error]);
-fprintf(1,'Principal point:       cc = [ %3.5f   %3.5f ] ± [ %3.5f   %3.5f ]\n',[cc;cc_error]);
-fprintf(1,'Skew:             alpha_c = [ %3.5f ] ± [ %3.5f  ]   => angle of pixel axes = %3.5f ± %3.5f degrees\n',[alpha_c;alpha_c_error],90 - atan(alpha_c)*180/pi,atan(alpha_c_error)*180/pi);
-fprintf(1,'Distortion:            kc = [ %3.5f   %3.5f   %3.5f   %3.5f  %5.5f ] ± [ %3.5f   %3.5f   %3.5f   %3.5f  %5.5f ]\n',[kc;kc_error]);   
+fprintf(1,'Focal Length:          fc = [ %3.5f   %3.5f ] +/- [ %3.5f   %3.5f ]\n',[fc;fc_error]);
+fprintf(1,'Principal point:       cc = [ %3.5f   %3.5f ] +/- [ %3.5f   %3.5f ]\n',[cc;cc_error]);
+fprintf(1,'Skew:             alpha_c = [ %3.5f ] +/- [ %3.5f  ]   => angle of pixel axes = %3.5f +/- %3.5f degrees\n',[alpha_c;alpha_c_error],90 - atan(alpha_c)*180/pi,atan(alpha_c_error)*180/pi);
+fprintf(1,'Distortion:            kc = [ %3.5f   %3.5f   %3.5f   %3.5f  %5.5f ] +/- [ %3.5f   %3.5f   %3.5f   %3.5f  %5.5f ]\n',[kc;kc_error]);   
 fprintf(1,'Pixel error:          err = [ %3.5f   %3.5f ]\n\n',err_std); 
 fprintf(1,'Note: The numerical errors are approximately three times the standard deviations (for reference).\n\n\n')
 %fprintf(1,'      For accurate (and stable) error estimates, it is recommended to run Calibration once again.\n\n\n')
@@ -611,7 +609,7 @@ fprintf(1,'Note: The numerical errors are approximately three times the standard
 alpha_c_min = alpha_c - alpha_c_error/2;
 alpha_c_max = alpha_c + alpha_c_error/2;
 
-if (alpha_c_min < 0) & (alpha_c_max > 0),
+if (alpha_c_min < 0) && (alpha_c_max > 0),
     fprintf(1,'Recommendation: The skew coefficient alpha_c is found to be equal to zero (within its uncertainty).\n');
     fprintf(1,'                You may want to reject it from the optimization by setting est_alpha=0 and run Calibration\n\n');
 end;
@@ -621,7 +619,7 @@ kc_max = kc + kc_error/2;
 
 prob_kc = (kc_min < 0) & (kc_max > 0);
 
-if ~(prob_kc(3) & prob_kc(4))
+if ~(prob_kc(3) && prob_kc(4))
     prob_kc(3:4) = [0;0];
 end;
 

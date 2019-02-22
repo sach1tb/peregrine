@@ -1,4 +1,4 @@
-function [Xr, Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, target, mode)
+function [Xr, Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, target, gatingThreshold,  mode)
 %function [Xr Pr]=mttkf2ds(Xr, Pr,  Zk, dt, calib, target, mode)
 %
 % 2D kalman filter
@@ -19,7 +19,6 @@ n=6+4;
 ck=1;
 cid=2;
 ci=2;
-gt=16;
 
 %%%%
 if isempty(Xr)
@@ -57,17 +56,17 @@ else
 end
 
 switch target
-    case 0 % zebrafish
+    case 2 % zebrafish
         % sqrt of these values is the std for the process noise; 
         % 0 in the last column implies that this value stays constant
         Q=diag([0 0 9 9 9 0 1 1 1 1]); 
         X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
         P0=eye(n)*0; P0(3,3)=25; P0(4,4)=25; P0(5,5)=9; P0(7:n,7:n)=eye(n-7+1);
-    case 1 % pillbugs
+    case 4 % pillbugs
         Q=diag([.5 .5 1 1 5 0 1 1 1 1]);
         X0=[1, 1, 0, 0, 20, 1, 0, 0, 1, 0];
         P0=eye(n)*0; P0(3,3)=1; P0(4,4)=1; P0(5,5)=5; P0(7:n,7:n)=eye(n-7+1);
-    case 2 % danios
+    case 1 % danios
         % sqrt of these values is the std for the process noise; 
         % 0 in the last column implies that this value stays constant
         Q=diag([2 2 9 9 9 0 1 1 1 1]); 
@@ -95,9 +94,9 @@ f_predict=@(k, Xh, P) kalmanPredictMT(k, Xh, P, F, Q, n);
 
 % --- associate
 switch mode
-    case {0, 'gnn'}
-        da1=@(D) gnnda(D, gt);  
-    case {1, 'nnda'}
+    case {1, 'gnn'}
+        da1=@(D) gnnda(D, gatingThreshold);  
+    case {2, 'nnda'}
         da1=@(D) nnda(D);
 end
 

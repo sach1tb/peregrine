@@ -16,7 +16,7 @@ if n_ima ~= 0,
     
     if prod(double(active_images == 0)),
         disp('Error: There is no active image. Run Add/Suppress images to add images');
-        break
+        return;
     end;
     
     if exist('center_optim'),

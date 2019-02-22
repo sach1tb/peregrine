@@ -1,4 +1,4 @@
-function [Xr, Pr]=mttkf2d(Xr, Pr,  Zk, dt, calib, target, mode)
+function [Xr, Pr]=mttkf2d(Xr, Pr,  Zk, dt, calib, target, gatingThreshold, mode)
 %function [Xr Pr]=mttkf2d(Xr, Pr,  Zk, dt, calib, target, mode)
 %
 % 2D kalman filter
@@ -19,7 +19,6 @@ nX=6;
 ck=1;
 cid=2;
 ci=2;
-gatingThreshold=16;
 
 %%%%
 if isempty(Xr)
@@ -57,17 +56,23 @@ else
 end
 
 switch target
-    case 0 % zebrafish
+    case 2 % zebrafish
         % variance cm/s 
         Q=diag([0 0 9 9 5 0]); 
         X0=[1, 1, 0, 0, 20, 1];
         % average zebrafish speed is 5 cm/s
         P0=eye(nX)*0; P0(3,3)=25; P0(4,4)=25;
-    case 1 % pillbugs
+   case 3 % mosquitos
+        % variance cm/s 
+        Q=diag([0 0 5 5 5 0]); 
+        X0=[1, 1, 0, 0, 20, 1];
+        % average zebrafish speed is 3 cm/s
+        P0=eye(nX)*0; P0(3,3)=9; P0(4,4)=9;    
+    case 4 % pillbugs
         Q=diag([0 0 1 1 5 0]); % variance cm/s 
         X0=[1, 1, 0, 0, 20, 1];
         P0=eye(nX)*0; P0(3,3)=1; P0(4,4)=1; 
-    case 2 % danios
+    case 1 % danios
         Q=diag([0 0 9 9 5 0]); % variance cm/s 
         X0=[1, 1, 0, 0, 20, 1];
         % average danio speed is 6 cm/s
@@ -100,9 +105,9 @@ f_predict=@(k, Xh, P) kalmanPredictMT(k, Xh, P, F, Q, nX);
 
 % --- associate
 switch mode
-    case {0, 'gnn'}
+    case {1, 'gnn'}
         da1=@(D) gnnda(D, gatingThreshold);  
-    case {1, 'nnda'}
+    case {2, 'nnda'}
         da1=@(D) nnda(D);
 end
 

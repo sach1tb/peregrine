@@ -1,7 +1,7 @@
-function img=quick_verify(k, X,  cm2pix, img)
+function img=quick_verify(k, X,  cm2pix, img, fgislight)
 % 
 
-if nargin ==4 % image is provided for changing and passing
+if ~isempty(img) % image is provided for changing and passing
     xcur=X(X(:,1)==k,3);
     ycur=X(X(:,1)==k,4);
     if size(img, 3) >1
@@ -9,6 +9,18 @@ if nargin ==4 % image is provided for changing and passing
     end
     [xcur, ycur]=cm2pix(xcur, ycur);
     img=highlightpt(img, xcur, ycur);
+    
+    % trail
+    nsee=20;
+    for ii=max(1,k-nsee):k
+        xcur_ii=X(X(:,1)==ii,3);
+        ycur_ii=X(X(:,1)==ii,4);
+        if size(img, 3) >1
+            img=rgb2gray(img);
+        end
+        [xcur_ii, ycur_ii]=cm2pix(xcur_ii, ycur_ii);
+        img=highlightpt1(img, xcur_ii, ycur_ii);
+    end
 else
     nsee=10; nfut=3;
     trail=X(:,1)>max(1,k-nsee) & X(:,1)<=k+nfut;
@@ -27,18 +39,18 @@ else
         x=Xtr(iidx, 3);
         y=Xtr(iidx, 4);
         
-        [val tidx]=sort(Xtr(iidx,1));
+        [~, tidx]=sort(Xtr(iidx,1));
         x=x(tidx); y=y(tidx);
         
 
-        [u(1:numel(x),jj) v(1:numel(x),jj)]=cm2pix(x,y);
+        [u(1:numel(x),jj), v(1:numel(x),jj)]=cm2pix(x,y);
 
 
         x1=Xtr(curr & Xtr(:,2)==ii,3);
         y1=Xtr(curr & Xtr(:,2)==ii,4);
         if ~isempty(x1)
             x1=x1(1); y1=y1(1);
-            [u1(1,jj) v1(1,jj)]=cm2pix(x1,y1);
+            [u1(1,jj), v1(1,jj)]=cm2pix(x1,y1);
         end
 
         jj=jj+1;
@@ -54,6 +66,15 @@ else
     end
     plot(u,v);
 
+    % add ids in the form of text
+    for ii=ids'
+        if fgislight
+            text(u1(ii==ids)+5, v1(ii==ids)-5, sprintf('%.3d', ii), 'color', 'w');
+        else
+            text(u1(ii==ids)+5, v1(ii==ids)-5, sprintf('%.3d', ii), 'color', 'k');
+        end
+    end
+    
     % quiver if needed
     if size(X,2)>10
         fl=ceil(sqrt(Xtr(curr,7)/3)*2);
@@ -72,6 +93,14 @@ else
     end
 end
 
+function img=highlightpt1(img, xcur, ycur)
+
+[h, w]=size(img(:,:,1));
+imgind=sub2ind([h,w], ceil(ycur), ceil(xcur));
+
+img(imgind)=0;
+
+
 function img=highlightpt(img, xcur, ycur)
 
 [h, w]=size(img(:,:,1));
@@ -80,7 +109,7 @@ function img=highlightpt(img, xcur, ycur)
 % set the circular region for each mosquito
 npts=200; th=linspace(0,2*pi, npts);
 hl_rad=0:ceil(w/30);
-[HLR TH]=meshgrid(hl_rad, th);
+[HLR, TH]=meshgrid(hl_rad, th);
 regionx0=ceil(HLR.*cos(TH));
 regiony0=ceil(HLR.*sin(TH));
 
@@ -98,7 +127,7 @@ for jj=1:numel(xcur)
     hlght(:,1)=max(1,hlght(:,1));
     % brighten up this part in the image
     imgind=sub2ind([h,w], hlght(:,2), hlght(:,1));
-    [num thresh]=hist(double(img(imgind)),5);
+    [~, thresh]=hist(double(img(imgind)),5);
     thresh=mean(thresh);
     img(imgind)=img(imgind)*1.1;
     for trail_data=1:numel(imgind)

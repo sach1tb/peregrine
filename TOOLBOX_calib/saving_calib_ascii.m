@@ -9,7 +9,7 @@ fid = fopen([ save_name '.m'],'wt');
 
 fprintf(fid,'%% Intrinsic and Extrinsic Camera Parameters\n');
 fprintf(fid,'%%\n');
-fprintf(fid,'%% This script file can be directly excecuted under Matlab to recover the camera intrinsic and extrinsic parameters.\n');
+fprintf(fid,'%% This script file can be directly executed under Matlab to recover the camera intrinsic and extrinsic parameters.\n');
 fprintf(fid,'%% IMPORTANT: This file contains neither the structure of the calibration objects nor the image coordinates of the calibration points.\n');
 fprintf(fid,'%%            All those complementary variables are saved in the complete matlab data file Calib_Results.mat.\n');
 fprintf(fid,'%% For more information regarding the calibration model visit http://www.vision.caltech.edu/bouguetj/calib_doc/\n');

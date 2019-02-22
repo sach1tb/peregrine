@@ -29,9 +29,6 @@
 %In the future, a more general function will be there.
 %For now, if using a 3D calibration rig, set quick_init to 1 for an easy initialization of the focal length
 
-if ~exist('rosette_calibration','var')
-    rosette_calibration = 0;
-end;
 
 if ~exist('n_ima'),
    data_calib_no_read; % Load the images
@@ -40,44 +37,24 @@ end;
 
 
 check_active_images;
-
 check_extracted_images;
-
 check_active_images;
-
 desactivated_images = [];
 
 recompute_extrinsic = (length(ind_active) < 100); % if there are too many images, do not spend time recomputing the extrinsic parameters twice..
 
-if (rosette_calibration) 
-  %%% Special Setting for the Rosette:
-  est_dist = ones(5,1);
-end;
-
 %%% MAIN OPTIMIZATION CALL!!!!! (look into this function for the details of implementation)
 go_calib_optim_iter;
 
-
 if ~isempty(desactivated_images),
-   
    param_list_save = param_list;
-   
    fprintf(1,'\nNew optimization including the images that have been deactivated during the previous optimization.\n');
    active_images(desactivated_images) = ones(1,length(desactivated_images));
    desactivated_images = [];
-   
    go_calib_optim_iter;
-   
    if ~isempty(desactivated_images),
       fprintf(1,['List of images left desactivated: ' num2str(desactivated_images) '\n' ] );
    end;
-   
    param_list = [param_list_save(:,1:end-1) param_list];
-   
 end;
-
-
-%%%%%%%%%%%%%%%%%%%% GRAPHICAL OUTPUT %%%%%%%%%%%%%%%%%%%%%%%%
-
-%graphout_calib;
 

@@ -1,11 +1,12 @@
-function [bg, nZ, X, P, datfile, cm2pix, sz1, mesg, frame]=onestep(sides_cm, img_t,...
-                                bin_t, area_t, fgislight, circ, smooth, bg, alpha, ...
-                                blur, bb_blur, bb_size, X, P, fps, ...
-                                datfile, getfrm, bgyes, trktype, ...
-                                write_tracks, record_verify, split, shape, sz1, frame)                           
+function [bg, nZ, X, P, datfile, cm2pix, sz1, mesg, frame]= onestep(bg, imgarr, ...
+                        X, P, datfile, getfrm, bgyes, write_tracks, sz1, frame)
+% function [bg, nZ, X, P, datfile, cm2pix, sz1, mesg, frame]=onestep(sides_cm, img_t,...
+%                                 bin_t, area_t, fgislight, circ, smooth, bg, alpha, ...
+%                                 blur, bb_blur, bb_size, X, P, fps, ...
+%                                 datfile, getfrm, bgyes, trktype, ...
+%                                 write_tracks, record_verify, split, shape, sz1, frame) 
 
-global roi_crop
-global roi_cut
+global conf
 global view_type
 global k
 global live1
@@ -17,7 +18,7 @@ mesg=struct('txt', '');
  
 sz=[mean(sz1(sz1~=0)), std(sz1(sz1~=0))];
 
-calib=calib2d(roi_crop, sides_cm);
+calib=calib2d(conf.roi_crop, conf.sides_cm);
 cm2pix=@(x,y) cm2pix1(x,y, calib);
 
 if live1
@@ -28,9 +29,10 @@ img=getfrm(k);
 
 nZ=0;
 
-[fg, bg]=preproc(img, fgislight, smooth, img_t, bin_t, bg, alpha, ...
-                    roi_crop, circ, roi_cut, blur, bb_blur, area_t, split,...
-                    shape, sz, bb_size, frame);
+[fg, bg, img]=preproc(img, conf.fgislight, conf.smooth, conf.img_t, conf.bin_t, bg, imgarr, ...
+                    conf.alpha, conf.roi_crop, conf.circ, conf.roi_cut, conf.blur, conf.bb_blur, ...
+                    conf.area_t, conf.split, conf.shape, sz, conf.bb_size, ...
+                    conf.bgtype, frame);
 if live1
     if ~bgyes
         imshow(img);
@@ -49,28 +51,28 @@ if view_type==2
     if live1
         hold on;
         if mod(k,10)
-            if circ
-                center=[roi_crop(2)+roi_crop(4)/2; roi_crop(1)+roi_crop(3)/2];
-                rad=roi_crop(3:4)/2;
+            if conf.circ==2
+                center=[conf.roi_crop(2)+conf.roi_crop(4)/2; conf.roi_crop(1)+conf.roi_crop(3)/2];
+                rad=conf.roi_crop(3:4)/2;
                 th=-pi:.1:pi;
                 plot(center(2)+rad(1)*cos(th), center(1)+rad(2)*sin(th), 'b--');
             else
-                rectangle('position', roi_crop, 'linestyle', '--', 'edgecolor', 'b');
+                rectangle('position', conf.roi_crop, 'linestyle', '--', 'edgecolor', 'b');
             end
         end
         
         if mod(k,20);
-            nzi=find(roi_cut(:,1)~=0);
+            nzi=find(conf.roi_cut(:,1)~=0);
             for jj=nzi'
-                rectangle('position', roi_cut(jj,:), 'linestyle', '--', ...
+                rectangle('position', conf.roi_cut(jj,:), 'linestyle', '--', ...
                             'edgecolor', 'w');
             end
         end
     end
-    [Zk, ns_area, ~, frame]=getZ(fg, area_t, split, shape, sz, frame);
+    [Zk, ns_area, ~, frame]=getZ(fg, conf.area_t, conf.split, conf.shape, sz, frame);
     nZ=size(Zk,2);
     % ensure that we are getting good shape parameters
-    if shape
+    if conf.shape
         if ~isempty(Zk)
             if sum(Zk(4,:)~=0)<size(Zk,2)
                 mesg.txt='Shape :(';
@@ -91,10 +93,10 @@ if view_type==3
     if live1, hold on; end
     
     %%% get measurements
-    [Zk1, ns_area, ~, frame]=getZ(fg, area_t, split, shape, sz, frame);
+    [Zk1, ns_area, ~, frame]=getZ(fg, conf.area_t, conf.split, conf.shape, sz, frame);
     
     % ensure that we are getting good shape parameters
-    if shape
+    if conf.shape
         if ~isempty(Zk1)
             if sum(Zk1(4,:)~=0)<size(Zk1,2)
                 mesg.txt='Shape :(';
@@ -107,22 +109,11 @@ if view_type==3
 
     %%% change trackers here...
     try
-%         if shape && trktype ~=2
-%             error('[!] if tracking shape tracker type should be 2');
-%         end
-        
-        if ~shape
-            [X, P]=mttkf2d(X, P,  Zk1, 1/fps, calib, trktype, 0);  
+        if ~conf.shape
+            [X, P]=mttkf2d(X, P,  Zk1, 1/conf.fps, calib, conf.trktype, conf.t_gate, conf.da_type);
         else
-            [X, P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, trktype, 0);
+            [X, P]=mttkf2ds(X, P,  Zk1, 1/conf.fps, calib, conf.trktype, conf.t_gate, conf.da_type);
         end
-%         elseif trktype==2
-% %             error('shape tracker under maintenance!');
-% %             [X P]=mttpf2d(X, P,  Zk1, 1/fps, calib);
-%             [X, P]=mttkf2ds(X, P,  Zk1, 1/fps, calib, 0);
-%         elseif trktype==3
-%             [X, P]=mtt2d(X, P,  Zk1, 1/fps, calib, 0);    
-%         end
         frame(k).X=X(X(:,1)==k, :);
         frame(k).P=P(P(:,1)==k, :);
         
@@ -138,9 +129,9 @@ if view_type==3
     end
     
     if live1
-        quick_verify(k,X, cm2pix);       
+        quick_verify(k,X, cm2pix, [], conf.fgislight);       
         pos=mean(X(X(:,1)==k,3:4),1);
-        [xp yp]=cm2pix(pos(:,1), pos(:,2));
+        [xp, yp]=cm2pix(pos(:,1), pos(:,2));
         reset_axes_lim([xp yp], img, zoom_val);
     end
     
@@ -167,7 +158,7 @@ end
 %%%%% REPAIR
 if view_type==4    
     if live1, hold on; end
-    quick_verify(k,datfile, cm2pix);
+    quick_verify(k,datfile, cm2pix, [], conf.fgislight);
     
 
     pos=datfile(datfile(:,1)==k & datfile(:,2)==rp_id,3:4);
@@ -183,7 +174,7 @@ if view_type==4
         pos=mean(datfile(datfile(:,1)==k,3:4),1);
     end
 
-    [xp yp]=cm2pix(pos(:,1), pos(:,2));
+    [xp, yp]=cm2pix(pos(:,1), pos(:,2));
     reset_axes_lim([xp yp], img, zoom_val);
 end
 
@@ -192,14 +183,14 @@ end
 if view_type==5
     if live1, hold on; end
     if live1
-        if record_verify
-            img1=quick_verify(k,datfile, cm2pix, img);
+        if conf.record_verify
+            img1=quick_verify(k,datfile, cm2pix, img, conf.fgislight);
             
             imwrite(img1, sprintf('/tmp/verify_%.6d.jpg', k), 'jpg');
         else
-            quick_verify(k,datfile, cm2pix);
+            quick_verify(k,datfile, cm2pix, [], conf.fgislight);
             pos=mean(datfile(datfile(:,1)==k,3:4),1);
-            [xp yp]=cm2pix(pos(:,1), pos(:,2));
+            [xp, yp]=cm2pix(pos(:,1), pos(:,2));
             reset_axes_lim([xp yp], img, zoom_val);
         end
     end   
@@ -256,23 +247,25 @@ if ~isempty(stats)
     bb=cat(1,stats.BoundingBox);
 end
 
-function [fg, bg]=preproc(img, fgislight, smooth, img_t, bin_t, ...
-                        bg, bg_rupdate_alpha, roi_crop, circ, roi_cut, ...
-                        blur, bb_blur, area_t, split, shape, sz, bb_size, frame)
+function [fg, bg, img]=preproc(img, fgislight, smooth, img_t, bin_t, ...
+                        bg, imgarr, bg_rupdate_alpha, roi_crop, circ, roi_cut, ...
+                        blur, bb_blur, area_t, split, shape, sz, bb_size, ...
+                        bgtype, frame)
 
 [ih, iw, id]=size(img);
 if id > 1, img=rgb2gray(img); end
 
-if fgislight
+if fgislight==2
     img=255-img;
 end
 
-if smooth(3), 
-    filter2(fspecial('gaussian', smooth(1:2), smooth(3)), img); 
+if smooth.sigma && smooth.hsize(1)
+    img=uint8(filter2(fspecial('gaussian', smooth.hsize, smooth.sigma), img)); 
 end
 
 fg=img < img_t;
-if bin_t
+
+if bgtype==2 % running
     fg=fg & bg-img>bin_t;
     if bg_rupdate_alpha
         bg=bg*(1-bg_rupdate_alpha) + bg_rupdate_alpha*img;
@@ -280,6 +273,11 @@ if bin_t
         bg=max(bg, img);
     end
 end
+
+if bgtype==3 % moving average
+    bg=max(imgarr, [], 3);
+end
+
 if roi_crop(1)
     fg=setRoi(fg, roi_crop, roi_cut(roi_cut(:,1)~=0,:), circ);
 end
@@ -316,7 +314,7 @@ if bb_blur(3)
 end
 
 
-function [u v]=cm2pix1(x,y, calib)
+function [u, v]=cm2pix1(x,y, calib)
 
 u= x/calib.pix2cm(1)+calib.center(1);
 v= y/calib.pix2cm(2)+calib.center(2);
@@ -351,7 +349,7 @@ global debug
 
 if isnan(sz(1))
     aa=cat(1,stats.Area);
-    sz=[mean(aa) std(aa)];
+    sz=[mean(aa), std(aa)];
 end
 
 ss=1;
@@ -386,7 +384,7 @@ if split
 end
 
 
-function [stats pixw_out]=curve_fit(stats)
+function [stats, pixw_out]=curve_fit(stats)
 global debug
 % just add two fields if no blobs are seen
 if isempty(stats)

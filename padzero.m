@@ -16,7 +16,8 @@ ext=flist(1).name(end-3:end);
 fprintf('Showing a sample list of name changes ....\n\n');
 pause(1);
 
-for ii=1:100:size(flist,1)
+rf=randperm(size(flist,1));
+for ii=rf(1:5)
     oldname=[directory, '/', flist(ii).name];
     name_length=numel(flist(ii).name);
     ident=flist(ii).name(end-(name_length-prefix_length)+1:end-4);

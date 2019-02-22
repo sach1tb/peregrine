@@ -1,14 +1,3 @@
-if ~exist('rosette_calibration','var')
-    rosette_calibration = 0;
-end;
-
-if (rosette_calibration)
-    % Guesses for the intrinsic parameters.
-    fg = [ 2300.044453320904  2304.757690230091  ]';
-    cg = [924.743157649778  1282.463968890109   ]';
-    kg = [-0.443251898487364   0.247922214991804  -0.000682045390384  0.000326391030429   -0.092405396596532]';
-end;
-
 if exist(['wintx_' num2str(kk)]),
     eval(['wintxkk = wintx_' num2str(kk) ';']);
     if ~isempty(wintxkk) & ~isnan(wintxkk),
@@ -17,11 +6,6 @@ if exist(['wintx_' num2str(kk)]),
     end;
 end;
 
-if (rosette_calibration),
-    wintx = 20;
-    winty = 20;
-end;
-        
 fprintf(1,'Using (wintx,winty)=(%d,%d) - Window size = %dx%d      (Note: To reset the window size, run script clearwin)\n',wintx,winty,2*wintx+1,2*winty+1);
 
 grid_success = 0;
@@ -39,20 +23,8 @@ while (~grid_success)
         title(['Click on the four extreme corners of the rectangular pattern (first corner = origin)... Image ' num2str(kk)]);
         disp('Click on the four extreme corners of the rectangular complete pattern (the first clicked corner is the origin)...');
 
-        if (rosette_calibration)
-            position_fig = get(2,'position');
-            position_fig(3:4) = [674 824];
-            set(2,'position',position_fig);
-            findfigs;
-        end;
-        
         wintx_save = wintx;
         winty_save = winty;
-
-        if (rosette_calibration)
-            wintx = 30;
-            winty = 30;
-        end;
 
         x= [];y = [];
         figure(2); hold on;
@@ -100,25 +72,6 @@ while (~grid_success)
 
     x = x(ind);
     y = y(ind);
-
-    if (rosette_calibration)
-        % Enforce the orering convention for the Rosette calibration.
-        % get the first two points by sorting the x:
-        [x_junk,ind_sort_x] = sort(x);
-        first_two_points = ind_sort_x(1:2);
-        last_two_points = ind_sort_x(3:4);
-
-        [y_junk, ind_sort_y] = sort(y(first_two_points));
-        ind1 = first_two_points(ind_sort_y(2));
-        ind2 = first_two_points(ind_sort_y(1));
-        [y_junk, ind_sort_y] = sort(y(last_two_points));
-        ind3 = last_two_points(ind_sort_y(1));
-        ind4 = last_two_points(ind_sort_y(2));
-
-        ind_resort = [ind1;ind2;ind3;ind4];
-        x = x(ind_resort);
-        y = y(ind_resort);
-    end;
 
     x1= x(1); x2 = x(2); x3 = x(3); x4 = x(4);
     y1= y(1); y2 = y(2); y3 = y(3); y4 = y(4);
@@ -173,41 +126,23 @@ while (~grid_success)
         if isempty(n_sq_y), n_sq_y = n_sq_y_default; end;
         grid_success = 1;
     else
-        if (rosette_calibration)
-            n_sq_x1 = count_squares_distorted(I,x1,y1,x2,y2,wintx, fg, cg, kg);
-            n_sq_x2 = count_squares_distorted(I,x3,y3,x4,y4,wintx, fg, cg, kg);
-            n_sq_y1 = count_squares_distorted(I,x2,y2,x3,y3,wintx, fg, cg, kg);
-            n_sq_y2 = count_squares_distorted(I,x4,y4,x1,y1,wintx, fg, cg, kg);
-        else
-            % Try to automatically count the number of squares in the grid
-            n_sq_x1 = count_squares(I,x1,y1,x2,y2,wintx);
-            n_sq_x2 = count_squares(I,x3,y3,x4,y4,wintx);
-            n_sq_y1 = count_squares(I,x2,y2,x3,y3,wintx);
-            n_sq_y2 = count_squares(I,x4,y4,x1,y1,wintx);
-        end;
+        % Try to automatically count the number of squares in the grid
+        n_sq_x1 = count_squares(I,x1,y1,x2,y2,wintx);
+        n_sq_x2 = count_squares(I,x3,y3,x4,y4,wintx);
+        n_sq_y1 = count_squares(I,x2,y2,x3,y3,wintx);
+        n_sq_y2 = count_squares(I,x4,y4,x1,y1,wintx);
 
         % If could not count the number of squares, enter manually
         if ((n_sq_x1~=n_sq_x2)||(n_sq_y1~=n_sq_y2)||...
                 (min([n_sq_x1 n_sq_x2 n_sq_y1 n_sq_y2] < 0))),
-            if (rosette_calibration)
-                % Try harder using an existing intrinsic model:
-                n_sq_x1 = count_squares_distorted(I,x1,y1,x2,y2,wintx, fg, cg, kg);
-                n_sq_x2 = count_squares_distorted(I,x3,y3,x4,y4,wintx, fg, cg, kg);
-                n_sq_y1 = count_squares_distorted(I,x2,y2,x3,y3,wintx, fg, cg, kg);
-                n_sq_y2 = count_squares_distorted(I,x4,y4,x1,y1,wintx, fg, cg, kg);
-            end;
             if ((n_sq_x1~=n_sq_x2)||(n_sq_y1~=n_sq_y2)||...
                     (min([n_sq_x1 n_sq_x2 n_sq_y1 n_sq_y2] < 0))),
-                if ~rosette_calibration,
-                    disp('Could not count the number of squares in the grid. Enter manually.');
-                    n_sq_x = input(['Number of squares along the X direction ([]=' num2str(n_sq_x_default) ') = ']); %6
-                    if isempty(n_sq_x), n_sq_x = n_sq_x_default; end;
-                    n_sq_y = input(['Number of squares along the Y direction ([]=' num2str(n_sq_y_default) ') = ']); %6
-                    if isempty(n_sq_y), n_sq_y = n_sq_y_default; end;
-                    grid_success = 1;
-                else
-                    grid_success = 0;
-                end;
+                disp('Could not count the number of squares in the grid. Enter manually.');
+                n_sq_x = input(['Number of squares along the X direction ([]=' num2str(n_sq_x_default) ') = ']); %6
+                if isempty(n_sq_x), n_sq_x = n_sq_x_default; end;
+                n_sq_y = input(['Number of squares along the Y direction ([]=' num2str(n_sq_y_default) ') = ']); %6
+                if isempty(n_sq_y), n_sq_y = n_sq_y_default; end;
+                grid_success = 1;
             else
                 n_sq_x = n_sq_x1;
                 n_sq_y = n_sq_y1;
@@ -239,54 +174,26 @@ else
     fprintf(1,['Size of each square along the Y direction: dY=' num2str(dY) 'm   (Note: To reset the size of the squares, clear the variables dX and dY)\n']);
 end;
 
-if (~rosette_calibration)
-    % Compute the inside points through computation of the planar homography (collineation)
-    a00 = [x(1);y(1);1];
-    a10 = [x(2);y(2);1];
-    a11 = [x(3);y(3);1];
-    a01 = [x(4);y(4);1];
+% Compute the inside points through computation of the planar homography (collineation)
+a00 = [x(1);y(1);1];
+a10 = [x(2);y(2);1];
+a11 = [x(3);y(3);1];
+a01 = [x(4);y(4);1];
 
-    % Compute the planar collineation: (return the normalization matrix as well)
-    [Homo,Hnorm,inv_Hnorm] = compute_homography([a00 a10 a11 a01],[0 1 1 0;0 0 1 1;1 1 1 1]);
+% Compute the planar collineation: (return the normalization matrix as well)
+[Homo,Hnorm,inv_Hnorm] = compute_homography([a00 a10 a11 a01],[0 1 1 0;0 0 1 1;1 1 1 1]);
 
-    % Build the grid using the planar collineation:
-    x_l = ((0:n_sq_x)'*ones(1,n_sq_y+1))/n_sq_x;
-    y_l = (ones(n_sq_x+1,1)*(0:n_sq_y))/n_sq_y;
-    pts = [x_l(:) y_l(:) ones((n_sq_x+1)*(n_sq_y+1),1)]';
-    XX = Homo*pts;
-    XX = XX(1:2,:) ./ (ones(2,1)*XX(3,:));
-else
-    [x_pn] = normalize_pixel([x' ; y'] - 1,fg,cg,kg,0);
-    
-    % Compute the inside points through computation of the planar homography (collineation)
-    a00 = [x_pn(1,1);x_pn(2,1);1];
-    a10 = [x_pn(1,2);x_pn(2,2);1];
-    a11 = [x_pn(1,3);x_pn(2,3);1];
-    a01 = [x_pn(1,4);x_pn(2,4);1];
-
-    % Compute the planar collineation: (return the normalization matrix as well)
-    [Homo,Hnorm,inv_Hnorm] = compute_homography([a00 a10 a11 a01],[0 1 1 0;0 0 1 1;1 1 1 1]);
-
-    % Build the grid using the planar collineation:
-    x_l = ((0:n_sq_x)'*ones(1,n_sq_y+1))/n_sq_x;
-    y_l = (ones(n_sq_x+1,1)*(0:n_sq_y))/n_sq_y;
-    pts = [x_l(:) y_l(:) ones((n_sq_x+1)*(n_sq_y+1),1)]';
-
-    XXpn = Homo*pts;
-    XXpn = XXpn(1:2,:) ./ (ones(2,1)*XXpn(3,:));
-
-    XX = apply_distortion2(XXpn,kg);
-
-    XX(1,:) = fg(1)*XX(1,:) + cg(1) + 1;
-    XX(2,:) = fg(2)*XX(2,:) + cg(2) + 1;
-end;
+% Build the grid using the planar collineation:
+x_l = ((0:n_sq_x)'*ones(1,n_sq_y+1))/n_sq_x;
+y_l = (ones(n_sq_x+1,1)*(0:n_sq_y))/n_sq_y;
+pts = [x_l(:) y_l(:) ones((n_sq_x+1)*(n_sq_y+1),1)]';
+XX = Homo*pts;
+XX = XX(1:2,:) ./ (ones(2,1)*XX(3,:));
 
 % Complete size of the rectangle
 W = n_sq_x*dX;
 L = n_sq_y*dY;
 
-if (~rosette_calibration)
-    
 %%%%%%%%%%%%%%%%%%%%%%%% ADDITIONAL STUFF IN THE CASE OF HIGHLY DISTORTED IMAGES %%%%%%%%%%%%%
 figure(2);
 hold on;
@@ -308,9 +215,6 @@ if quest_distort,
     script_fit_distortion;
 end;
 %%%%%%%%%%%%%%%%%%%%% END ADDITIONAL STUFF IN THE CASE OF HIGHLY DISTORTED IMAGES %%%%%%%%%%%%%
-
-end;
-
 
 
 Np = (n_sq_x+1)*(n_sq_y+1);
@@ -334,7 +238,7 @@ dypos = mean([grid_pts(:,ind_orig) grid_pts(:,ind_orig-n_sq_x-1)]');
 x_box_kk = [grid_pts(1,:)-(wintx+.5);grid_pts(1,:)+(wintx+.5);grid_pts(1,:)+(wintx+.5);grid_pts(1,:)-(wintx+.5);grid_pts(1,:)-(wintx+.5)];
 y_box_kk = [grid_pts(2,:)-(winty+.5);grid_pts(2,:)-(winty+.5);grid_pts(2,:)+(winty+.5);grid_pts(2,:)+(winty+.5);grid_pts(2,:)-(winty+.5)];
 
-
+if (0)
 figure(3);
 image(I); axis image; colormap(map); hold on;
 plot(grid_pts(1,:)+1,grid_pts(2,:)+1,'r+');
@@ -353,7 +257,7 @@ title('Extracted corners');
 zoom on;
 drawnow;
 hold off;
-
+end;
 
 Xi = reshape(([0:n_sq_x]*dX)'*ones(1,n_sq_y+1),Np,1)';
 Yi = reshape(ones(n_sq_x+1,1)*[n_sq_y:-1:0]*dY,Np,1)';

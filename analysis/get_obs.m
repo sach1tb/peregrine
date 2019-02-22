@@ -41,7 +41,7 @@ function get_obs(type, varargin)
 % 'RegionBounds' = Boundaries of a region to compute number of entries;
 % specify min and maximum e.g. [15, 28], or [-28, -15]
 % 'TrajSec' = segments of trajectory in seconds that must be used to x corr
-% 'TankPartitions' = number of partitions you want to divide the tank into
+% 'TankPartitions' =  of partitions you want to divide the tank into
 % 'Coord' = coordinate dimension along which the quantity must be computed
 %
 % Examples:
@@ -1058,10 +1058,10 @@ for ii =1:size(FileName,2)
         dir_us=atan2(v2us, v1us);
         
 %         [xx lags]=xcorr(dir_e, dir_us, 'coeff');
-        [xx lags]=xcorr(dir_e, dir_us);
+        [xx, lags]=xcorr(dir_e, dir_us);
 %         [xx lags]=xcorr(vve(1,:), v1us);
         if ~isnan(max(xx))
-            [val idx]=max(xx);
+            [val, idx]=max(xx);
             tau=lags(idx)/fps;
         else
             tau=0;
@@ -1779,7 +1779,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %________________________________________________________________
 
-function [Xh Xi]=reformat_csv(csvfile, nfrm)
+function [Xh, Xi]=reformat_csv(csvfile, nfrm)
 
 Xhcsv=csvread(csvfile);
 
