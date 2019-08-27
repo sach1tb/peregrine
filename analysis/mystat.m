@@ -1,4 +1,4 @@
-function mystat(stype, X, xlabels, ylbl, ptype, ctype)
+function fh=mystat(stype, X, xlabels, ylbl, ptype, ctype)
 % function mystat(stype, X, xlabels, ylbl, ptype)
 %
 % stype is the statistical test: can be anova1way or a1, kw, anovan
@@ -59,11 +59,11 @@ end
 
 switch ptype
     case 1
-        boxplot(X);
+        fh=boxplot(X);
     case 2
         bar(nanmean(X,1), 'facecolor', ones(1,3)*.5);
         hold on;
-        errorbar(1:size(X,2), nanmean(X,1), nanstd(X,[],1)./sqrt(sum(~isnan(X),1)), 'k.');
+        fh=errorbar(1:size(X,2), nanmean(X,1), nanstd(X,[],1)./sqrt(sum(~isnan(X),1)), 'k.');
 end
 
 set(gca, 'fontsize', fs);
