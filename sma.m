@@ -8,7 +8,7 @@ function y=sma(x, win)
 % y is the output
 
 
-[nr nc]=size(x);
+[nr, nc]=size(x);
 column=0;
 if(nr > nc)
     column=1;

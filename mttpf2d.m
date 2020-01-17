@@ -184,7 +184,7 @@ p([5 7 8 9 10],:)=Z(3:7)*ones(1,size(p,2));
  
 wts=wts/sum(wts);
 neff=1/sum(wts.^2);
-if (neff <=  size(p,2))
+if (neff <=  size(p,2)/2)
     p=p(:,resample(wts));
 end 
 

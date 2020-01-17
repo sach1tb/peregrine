@@ -61,7 +61,7 @@ if view_type==2
             end
         end
         
-        if mod(k,20);
+        if mod(k,20)
             nzi=find(conf.roi_cut(:,1)~=0);
             for jj=nzi'
                 rectangle('position', conf.roi_cut(jj,:), 'linestyle', '--', ...
